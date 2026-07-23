@@ -1,0 +1,645 @@
+/* ==========================================================================
+   ZAKE ANTI GRABBER // STYLE.CSS (LIMPO & NEUTRO)
+   Zero saturação, sem luzes neon e com foco em legibilidade e clareza.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rubik:wght@400;500;600;700&display=swap');
+
+:root {
+    --font-sans: 'Roboto', 'Roboto', sans-serif;
+    --font-ui: 'Roboto', sans-serif;
+
+    /* Tons estritamente neutros e sem saturação (Escala de Cinzas) */
+    --bg-root: #0c0c0e;
+    --bg-card: #131316;
+    --bg-card-hover: #18181c;
+    --bg-terminal: #08080a;
+    
+    --border-color: #222226;
+    --border-hover: #333338;
+    
+    --text-primary: #f2f2f3;
+    --text-secondary: #9a9a9e;
+    --text-muted: #5e5e64;
+
+    /* Cores funcionais (Exclusivas para alertas, status e terminal) */
+    --color-cyan: #a698af;
+    --color-red: #9c3e31;
+    --color-yellow: #d3ca4d;
+    --color-green: #6ba54a;
+
+    --transition-smooth: all 0.2s ease-in-out;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-sans);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body.app-body {
+    background-color: var(--bg-root);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Container Centralizado e Organizado */
+.app-container {
+    max-width: 1080px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex-grow: 1;
+}
+
+/* Estrutura Padrão dos Cartões (Neutro e Sóbrio) */
+.clean-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    transition: var(--transition-smooth);
+}
+
+.clean-card:hover {
+    border-color: var(--border-hover);
+}
+
+/* ==========================================================================
+   CABEÇALHO (HEADER)
+   ========================================================================== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+.brand-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    background: #1c1c20;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-icon {
+    color: var(--text-primary);
+}
+
+.brand-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.brand-title strong {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-root);
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-family: var(--font-ui);
+    color: var(--text-secondary);
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-green);
+    border-radius: 50%;
+}
+
+/* ==========================================================================
+   BOTÕES
+   ========================================================================== */
+.btn {
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-family: var(--font-ui);
+}
+
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    background: #1c1c20;
+    border-color: var(--border-hover);
+}
+
+.btn-primary {
+    background: #e2e2e5;
+    color: #0c0c0e;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #ffffff;
+}
+
+.btn-success {
+    background: var(--color-green);
+    color: #ffffff;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.hidden-input, .hidden-btn {
+    display: none !important;
+}
+
+/* ==========================================================================
+   APRESENTAÇÃO (HERO)
+   ========================================================================== */
+.hero-section {
+    padding: 2.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.hero-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.hero-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 750px;
+    font-family: var(--font-ui);
+}
+
+/* ==========================================================================
+   ÁREA DE TRABALHO E DROPZONE
+   ========================================================================== */
+.workspace-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.toolbar-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    font-size: 0.85rem;
+    font-family: var(--font-ui);
+}
+
+@media (min-width: 640px) {
+    .toolbar-card {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.toolbar-info {
+    color: var(--text-secondary);
+}
+
+.toolbar-info strong {
+    color: var(--text-primary);
+}
+
+.toolbar-password {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.password-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.password-input {
+    background: var(--bg-root);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    outline: none;
+    transition: var(--transition-smooth);
+}
+
+.password-input:focus {
+    border-color: var(--text-secondary);
+}
+
+/* Caixa de Arrastar Arquivo */
+.dropzone-card {
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    border: 2px dashed var(--border-color);
+    background: var(--bg-card);
+    border-radius: 14px;
+    transition: var(--transition-smooth);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dropzone-card:hover, .dropzone-card.dragover {
+    border-color: #4a4a50;
+    background: var(--bg-card-hover);
+}
+
+.dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.dropzone-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--bg-root);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.dropzone-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dropzone-subtitle {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-family: var(--font-ui);
+}
+
+/* ==========================================================================
+   ESTATÍSTICAS (ÚNICA ÁREA DE CORES EM DESTAQUE)
+   ========================================================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1rem;
+}
+
+@media (min-width: 480px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.stat-card {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+/* Cores funcionais estritas nas estatísticas */
+.val-cyan { color: var(--color-cyan); }
+.val-red { color: var(--color-red); }
+.val-yellow { color: var(--color-yellow); }
+.val-green { color: var(--color-green); }
+
+/* ==========================================================================
+   PAINEL DE REMOÇÃO DE VÍRUS (TABELA)
+   ========================================================================== */
+.audit-section {
+    overflow: hidden;
+}
+
+.hidden-section {
+    display: none !important;
+}
+
+.audit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #101013;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.audit-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.audit-summary-badge {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-red);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-ui);
+}
+
+.audit-table-wrapper {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.8rem;
+    font-family: var(--font-ui);
+}
+
+.audit-table th {
+    background: var(--bg-root);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+}
+
+.audit-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.audit-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Gravidades com cores apenas no indicador */
+.tag-severity {
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.sev-CRITICAL { background: rgba(239, 68, 68, 0.15); color: var(--color-red); }
+.sev-HIGH { background: rgba(245, 158, 11, 0.15); color: var(--color-yellow); }
+.sev-MEDIUM { background: rgba(56, 189, 248, 0.15); color: var(--color-cyan); }
+
+/* Checkbox simples e visível */
+.custom-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-red);
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   TERMINAL DE AVISOS EM TEMPO REAL
+   ========================================================================== */
+.terminal-section {
+    background: var(--bg-terminal);
+    overflow: hidden;
+}
+
+.terminal-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background: #101013;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.terminal-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.terminal-filters {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.t-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    font-family: var(--font-ui);
+}
+
+.t-btn.active, .t-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+    background: #1c1c20;
+}
+
+.terminal-viewport {
+    padding: 1rem 1.25rem;
+    height: 220px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    font-family: var(--font-ui);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.log-line {
+    line-height: 1.4;
+}
+
+/* Exclusividade de cor nas mensagens de log */
+.log-info { color: var(--text-secondary); }
+.log-clean { color: var(--color-green); }
+.log-warn { color: var(--color-yellow); }
+.log-danger { color: var(--color-red); font-weight: 600; }
+.log-sys { color: var(--color-cyan); }
+
+.terminal-footer {
+    padding: 0.6rem 1.25rem;
+    background: #101013;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-clear-term {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    font-family: var(--font-ui);
+}
+
+.btn-clear-term:hover {
+    color: var(--text-primary);
+}
+
+/* ==========================================================================
+   BARRA DE AÇÃO (COMPILAÇÃO / DOWNLOAD)
+   ========================================================================== */
+.action-section {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .action-section {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.action-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.action-heading {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.action-subheading {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+}
+
+.action-buttons-group {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .action-buttons-group {
+        width: auto;
+    }
+}
+
+/* ==========================================================================
+   RODAPÉ
+   ========================================================================== */
+.app-footer {
+    width: 100%;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-root);
+    margin-top: 2rem;
+    padding: 1.5rem 0;
+}
+
+.footer-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+}
+
+.footer-divider {
+    color: var(--border-color);
+}

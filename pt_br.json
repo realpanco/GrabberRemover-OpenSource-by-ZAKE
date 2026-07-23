@@ -1,0 +1,120 @@
+{
+  "meta": {
+    "title": "ZAKE ANTI GRABBER // Proteção & Purificação de Código"
+  },
+  "header": {
+    "badge": "✓ Motor v4.0 Pro",
+    "lang": "PT-BR",
+    "db_label": "BASE ATIVA:",
+    "btn_import": "Importar JSON"
+  },
+  "hero": {
+    "tag": "AUDITORIA PROFUNDA DE PROJECTS & MODS",
+    "title_start": "PURIFICAÇÃO DE SOURCES EM",
+    "title_highlight": "TEMPO REAL",
+    "description": "Tecnologia client-side de inspeção heurística. Elimine injeções no Visual Studio (.vcxproj), executáveis ocultos (Droppers), scripts maliciosos de PowerShell e Webhooks do Discord/Telegram sem enviar arquivos para servidores externos.",
+    "badge_1": "100% Client-Side",
+    "badge_2": "Zero Exfiltração de Dados",
+    "badge_3": "Heurística memory_rst"
+  },
+  "toolbar": {
+    "instruction": "Insira seu projeto em formato <strong>.ZIP</strong> ou <strong>.RAR</strong> para auditoria estrutural e purificação de exploits.",
+    "password_label": "Senha do Arquivo:",
+    "password_placeholder": "Opcional (se criptografado)"
+  },
+  "dropzone": {
+    "title": "ARRASTE E SOLTE SUA SOURCE AQUI",
+    "subtitle": "Ou clique na área para procurar arquivos no seu computador (.ZIP / .RAR)",
+    "limit": "Tamanho limite em memória no navegador: Até 500 MB"
+  },
+  "stats": {
+    "total_label": "Arquivos Processados",
+    "total_desc": "Leitura estrutural do container",
+    "threats_label": "Ameaças e Exploits",
+    "threats_desc": "Assinaturas e injeções isoladas",
+    "pending_label": "Ações Pendentes",
+    "pending_desc": "Marcados para remoção no painel",
+    "status_label": "Status de Segurança",
+    "status_default": "STANDBY",
+    "substatus_default": "Aguardando arquivo fonte"
+  },
+  "audit": {
+    "title": "PAINEL DE AUDITORIA INTERATIVA // VIRUSTOTAL ENGINE",
+    "summary_pending": "Anomalias Pendentes"
+  },
+  "table": {
+    "th_action": "Remover",
+    "th_file": "Arquivo Inspecionado",
+    "th_rule": "Assinatura / Heurística Detectada",
+    "th_severity": "Gravidade",
+    "th_treatment": "Tratamento Proposto pela Engine"
+  },
+  "terminal": {
+    "title": "CONSOLE DE TELEMETRIA EM TEMPO REAL // LOGS",
+    "filter_all": "Todos",
+    "filter_danger": "Ameaças",
+    "filter_warn": "Avisos",
+    "filter_clean": "Seguros",
+    "filter_sys": "Sistema",
+    "btn_clear": "Limpar Console de Telemetria"
+  },
+  "action": {
+    "heading": "PRONTO PARA COMPILAR SUA SOURCE?",
+    "subheading": "O sistema irá gerar um novo container .ZIP purificado respeitando as seleções feitas no painel acima.",
+    "btn_compile": "1. COMPILAR SOURCE SANITIZADA",
+    "btn_compiling": "⏳ COMPILANDO PACOTE...",
+    "btn_compiled": "✓ COMPILAÇÃO CONCLUÍDA",
+    "btn_download": "2. BAIXAR ARQUIVO LIMPO (.ZIP)"
+  },
+  "footer": {
+    "tagline": "Security Research & Exploit Mitigation Engine",
+    "security": "Processamento 100% Local no Hardware",
+    "rights": "© 2026 Desenvolvido por Zake. Todos os direitos reservados."
+  },
+  "dynamic": {
+    "status": {
+      "scanning": "ESCANEANDO",
+      "scanning_sub": "Lendo blocos em memória",
+      "audit": "AUDITORIA",
+      "audit_sub": "Requer revisão manual",
+      "clean": "100% LIMPO",
+      "clean_sub": "Nenhum exploit encontrado",
+      "purified": "PURIFICADO",
+      "purified_sub": "Pronto para download",
+      "error": "ERRO",
+      "error_sub": "Falha no buffer de entrada"
+    },
+    "actions": {
+      "delete_file": "Exclusão do arquivo binário (.exe/.bat/.vbs)",
+      "remove_block": "Remover Bloco Infectado (<PreBuildEvent>)",
+      "remove_line": "Purificar Linha de Comando maliciosa",
+      "replace_null": "Anular URL de Webhook",
+      "remove_keyword": "Remover linha contendo identificador malicioso"
+    },
+    "logs": {
+      "sys_loaded": "[ SYS ] Motor Anti-Grabber ZAKE v4.0 alocado na memória local.",
+      "info_offline": "[ INFO ] Nenhuma informação ou código é enviado para a internet. Segurança 100% Client-Side.",
+      "standby": "[ STANDBY ] Aguardando arquivo para iniciar varredura profunda...",
+      "db_updated": "[ SYS ] Banco de dados memory_rst.json atualizado via arquivo externo!",
+      "db_error": "[ ERRO ] Estrutura do JSON inválida. Faltam chaves 'rules' ou 'keywords_blacklist'.",
+      "file_received": "[ SYS ] Carregando arquivo para varredura: {0} ({1} MB)",
+      "rar_warning": "[ AVISO ] Arquivo .RAR detectado. Como o protocolo é proprietário, a extração será processada localmente e convertida para .ZIP padronizado.",
+      "pwd_detected": "[ SEC ] Senha fornecida. Tentando destrancar cabeçalho criptográfico...",
+      "container_opened": "[ SYS ] Container aberto com sucesso! Mapeando {0} arquivos...",
+      "dropper_detected": "[ PERIGO ] Dropper executável identificado: {0}",
+      "binary_ignored": "[ AVISO ] Leitura textual ignorada (provável binário oculto): {0}",
+      "signature_detected": "[ ASSINATURA ] {0} no arquivo: {1}",
+      "heuristic_detected": "[ HEURÍSTICA ] Termo de Grabber ('{0}') localizado em: {1}",
+      "whitelist_ignored": "[ WHITELIST ] Exceção de biblioteca legitimada em: {0}",
+      "scan_finished_threats": "[ CONCLUSÃO ] Varredura concluída! {0} anomalias encontradas. Revise a tabela acima.",
+      "scan_finished_clean": "[ LIMPO ] Nenhuma assinatura ou grabber foi detectada na source!",
+      "crypt_error": "[ ERRO CRIPTOGRÁFICO ] O arquivo está protegido por senha. Digite-a no campo superior e arraste novamente.",
+      "read_error": "[ ERRO DE LEITURA ] Falha ao processar estrutura do arquivo: {0}",
+      "compile_start": "[ SYS ] Iniciando compilação do novo arquivo .ZIP sanitizado...",
+      "file_deleted": "[ EXCLUÍDO ] Arquivo descartado da compilação: {0}",
+      "file_sanitized": "[ SANITIZADO ] Código restaurado no arquivo: {0}",
+      "compile_packing": "[ COMPILAÇÃO ] Empacotando arquivo .ZIP purificado...",
+      "compile_success": "[ SUCESSO ] Source limpa gerada! Foram excluídos {0} arquivos e purificados {1} arquivos de código. Clique no botão verde!"
+    }
+  }
+}
