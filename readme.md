@@ -15,7 +15,7 @@ Usei IA pra deixar o codigo mais facil de entender se a explicação ficar uma m
 ---
 
 ## Como usar?
-aqui nesse link: 
+aqui nesse link: https://byzake.vercel.app
 
 ---
 
