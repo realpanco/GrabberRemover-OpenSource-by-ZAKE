@@ -1,39 +1,44 @@
 /**
  * ============================================================================
- * ZAKE ANTI GRABBER // SCRIPT.JS (REVISÃO OBRIGATÓRIA & PREVIEW DE CÓDIGO)
+ * ZAKE ANTI GRABBER // SCRIPT.JS (EXCLUSIVO PARA AS REGRAS ORIGINAIS)
  * ============================================================================
  */
 
 (function () {
     'use strict';
 
+    // Regras restritas unicamente aos pontos citados na instrução original
     let memoryRST = {
-        metadata: { version: "4.2", author: "Zake", total_signatures: 0 },
-        whitelisted_contexts: [
-            "require('discord.js')", "require(\"discord.js\")", "import discord", 
-            "from discord", "discord.Client", "discord.WebhookClient", "https://discord.gg/",
-            "ImGui::Text", "ImGui::Button", "ImGui_ImplDX12_", "ImGui_ImplDX9_", 
-            "ImGui_ImplWin32_", "CreateDeviceD3D", "CleanupDeviceD3D", "LRESULT WINAPI"
-        ],
         rules: [
-            { id: "RST_001", name: "Comando escondido nas configurações do projeto", regex: "<PreBuildEvent>[\\s\\S]*?<\\/PreBuildEvent>", severity: "CRITICAL", action: "REMOVE_BLOCK", desc: "Remover bloco infectado" },
-            { id: "RST_002", name: "Comando escondido na finalização do projeto", regex: "<PostBuildEvent>[\\s\\S]*?<\\/PostBuildEvent>", severity: "CRITICAL", action: "REMOVE_BLOCK", desc: "Remover bloco infectado" },
-            { id: "RST_003", name: "Script que baixa vírus em segundo plano (PowerShell)", regex: "^.*(powershell|iwr|Invoke-WebRequest|DownloadString|Start-Process).*(-WindowStyle\\s+Hidden|-Enc|-EncodedCommand).*$", severity: "CRITICAL", action: "REMOVE_LINE", desc: "Apagar linha maliciosa" },
-            { id: "RST_004", name: "Código embaralhado em Hexadecimal (esconde vírus)", regex: "^.*(\\\\x[0-9a-fA-F]{2}){15,}.*$", severity: "HIGH", action: "REMOVE_LINE", desc: "Apagar linha suspeita" },
-            { id: "RST_005", name: "Comando forçando execução oculta no Windows", regex: "^.*system\\s*\\(\\s*[a-zA-Z0-9_]+\\.c_str\\s*\\(\\s*\\)\\s*\\)\\s*;.*$", severity: "HIGH", action: "REMOVE_LINE", desc: "Apagar comando de execução" },
-            { id: "RST_006", name: "Link que envia suas senhas/tokens para o hacker (Discord)", regex: "https?:\\/\\/(ptb\\.|canary\\.)?discord(app)?\\.com\\/api\\/webhooks\\/[0-9]+\\/[a-zA-Z0-9_-]+", severity: "CRITICAL", action: "REPLACE_NULL", desc: "Destruir link do Webhook" },
-            { id: "RST_007", name: "Link de roubo de dados via Telegram", regex: "https?:\\/\\/api\\.telegram\\.org\\/bot[0-9]+:[a-zA-Z0-9_-]+\\/sendMessage", severity: "CRITICAL", action: "REPLACE_NULL", desc: "Destruir link do Bot" },
-            { id: "RST_008", name: "Tentativa de ler senhas do Google Chrome ou Discord", regex: "^.*(Local State|Login Data|Google\\\\Chrome\\\\User Data|Cordova|leveldb).*$", severity: "MEDIUM", action: "REMOVE_LINE", desc: "Apagar linha de roubo" }
+            {
+                id: "RULE_PREBUILD",
+                name: "Injeção de PreBuildEvent no projeto (.vcxproj)",
+                regex: "<PreBuildEvent>[\\s\\S]*?<\\/PreBuildEvent>",
+                severity: "CRITICAL",
+                action: "REMOVE_BLOCK",
+                desc: "Apagar o bloco <PreBuildEvent> inteiro"
+            },
+            {
+                id: "RULE_STRING_MALICIOSA",
+                name: "String maliciosa / Token de Injeção",
+                regex: "Fwfkuuv157wg2gjthwla0lwbo1493h7",
+                severity: "CRITICAL",
+                action: "REMOVE_LINE",
+                desc: "Apagar as linhas contendo a string"
+            },
+            {
+                id: "RULE_DROPPER_URL",
+                name: "Endereço de Download do Dropper (exo-api.tf)",
+                regex: "exo-api\\.tf|Retev\\.php",
+                severity: "CRITICAL",
+                action: "REMOVE_LINE",
+                desc: "Apagar linha com o link malicioso"
+            }
         ],
         keywords_blacklist: [
-            "Fwfkuuv157wg2gjthwla0lwbo1493h7", "exo-api.tf", "Retev.php", "BK291834.exe", "Berok.exe",
-            "AoMiRfxV.vbs", "g2Yiw4NcWwed", "GetChunk", "AppendChunk", "Scripting.FileSystemObject",
-            "TrojanWAC", "CrossRAT", "TelegramWebhook", "HookURL", "DiscordHook", "TokenGrabber",
-            "WannaCry", "RedLine", "RaccoonStealer", "AsyncRAT", "NjRAT", "QuasarRAT",
-            "Vidar", "Taurus", "MetaStealer", "DCRat", "VenomRAT", "LuminosityLink",
-            "ImminentMonitor", "Sub7", "ProRat", "CyberGate", "Spynet", "XtremeRAT", "BlackShades",
-            "NanoCore", "Remcos", "NetWire", "Gh0stRAT", "DarkComet", "DiscordNitroHack",
-            "RobloxCookieGrabber", "SteamStealer", "EpicGamesStealer", "TelegramSessionGrabber"
+            "Fwfkuuv157wg2gjthwla0lwbo1493h7",
+            "exo-api.tf",
+            "Retev.php"
         ]
     };
 
@@ -44,7 +49,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         setupEventListeners();
-        addLog("[ Sistema ] Pronto para verificar seus arquivos.", "log-sys");
+        addLog("[ Sistema ] Pronto. O scanner está configurado para procurar apenas as assinaturas exatas do guia.", "log-sys");
         loadMemoryRSTData();
     });
 
@@ -54,18 +59,16 @@
             if (!response.ok) throw new Error("HTTP Error");
             const data = await response.json();
             
-            if (data && data.rules && data.keywords_blacklist) {
-                data.keywords_blacklist = data.keywords_blacklist.filter(kw => kw.length >= 4 && !["token", "rat", "chat", "host", "link", "temp", "bind", "info"].includes(kw.toLowerCase()));
-                memoryRST = data;
-                const total = (memoryRST.rules.length || 0) + (memoryRST.keywords_blacklist.length || 0);
-                const dbCount = document.getElementById("db-count");
-                if (dbCount) dbCount.textContent = `${total} vírus conhecidos`;
-                addLog(`[ Sistema ] Base de dados carregada via servidor (${total} assinaturas).`, "log-sys");
+            // Se houver regras no json externo, unimos às nossas regras exatas
+            if (data && data.rules) {
+                memoryRST.rules = data.rules;
             }
-        } catch (error) {
-            const total = (memoryRST.rules?.length || 0) + (memoryRST.keywords_blacklist?.length || 0);
             const dbCount = document.getElementById("db-count");
-            if (dbCount) dbCount.textContent = `${total} vírus (base padrão)`;
+            if (dbCount) dbCount.textContent = `${memoryRST.rules.length} regras exatas ativas`;
+            addLog("[ Sistema ] Regras de varredura carregadas com sucesso.", "log-sys");
+        } catch (error) {
+            const dbCount = document.getElementById("db-count");
+            if (dbCount) dbCount.textContent = `${memoryRST.rules.length} regras (padrão)`;
         }
     }
 
@@ -99,15 +102,11 @@
                     reader.onload = (event) => {
                         try {
                             const customJSON = JSON.parse(event.target.result);
-                            if (customJSON.rules && customJSON.keywords_blacklist) {
-                                customJSON.keywords_blacklist = customJSON.keywords_blacklist.filter(kw => kw.length >= 4 && !["token", "rat", "chat", "host", "link", "temp", "bind", "info"].includes(kw.toLowerCase()));
-                                memoryRST = customJSON;
-                                const total = memoryRST.rules.length + memoryRST.keywords_blacklist.length;
-                                const dbCount = document.getElementById("db-count");
-                                if (dbCount) dbCount.textContent = `${total} vírus conhecidos`;
-                                addLog("[ Sistema ] Nova lista de vírus aplicada com sucesso!", "log-sys");
+                            if (customJSON.rules) {
+                                memoryRST.rules = customJSON.rules;
+                                addLog("[ Sistema ] Novas regras personalizadas aplicadas!", "log-sys");
                             }
-                        } catch (err) { addLog("[ Erro ] O arquivo .json enviado é inválido.", "log-danger"); }
+                        } catch (err) { addLog("[ Erro ] JSON inválido.", "log-danger"); }
                     };
                     reader.readAsText(file);
                 }
@@ -188,9 +187,6 @@
         if (btnDownload) btnDownload.classList.add("hidden-btn");
     }
 
-    /**
-     * Função auxiliar para encontrar em que linha o vírus está e extrair uma prévia (snippet)
-     */
     function extractCodeSnippet(content, patternMatch) {
         const lines = content.split(/\r?\n/);
         for (let idx = 0; idx < lines.length; idx++) {
@@ -203,11 +199,11 @@
                 };
             }
         }
-        return { line: "?", text: "Trecho oculto em bloco ou hexadecimal." };
+        return { line: "Bloco", text: "Trecho infectado detectado no arquivo." };
     }
 
     // ============================================================================
-    // MOTOR DE VARREDURA
+    // MOTOR DE VARREDURA EXCLUSIVO PARA AS REGRAS CITADAS
     // ============================================================================
     async function startScan(file) {
         resetSystem();
@@ -217,7 +213,7 @@
         const password = passwordInput ? passwordInput.value.trim() : "";
 
         addLog(`[ Sistema ] Analisando o arquivo: ${originalFileName}`, "log-sys");
-        if (isRar) addLog("[ Aviso ] Arquivo .RAR detectado. Ele será verificado e transformado em um .ZIP limpo.", "log-warn");
+        if (isRar) addLog("[ Aviso ] Arquivo .RAR detectado. Ele será convertido para .ZIP limpo após a varredura.", "log-warn");
         if (password) addLog("[ Sistema ] Usando a senha informada para abrir o arquivo...", "log-sys");
 
         try {
@@ -225,7 +221,7 @@
             loadedZipObject = await zip.loadAsync(file, { password: password || undefined });
             
             const entries = Object.keys(loadedZipObject.files);
-            addLog(`[ Sistema ] Arquivo aberto! Verificando ${entries.length} itens internos...`, "log-info");
+            addLog(`[ Sistema ] Verificando ${entries.length} arquivos em busca das assinaturas originais...`, "log-info");
             
             const bannedExtensions = [".exe", ".scr", ".vbs", ".bat", ".cmd", ".ps1", ".pif"];
             const textExtensions = [".vcxproj", ".sln", ".cpp", ".h", ".hpp", ".c", ".cs", ".js", ".ts", ".py", ".txt", ".json", ".xml", ".html", ".css", ".md", ".ini", ".php"];
@@ -237,43 +233,34 @@
 
                 countTotal++;
                 document.getElementById("stat-total").textContent = countTotal;
-                const lowerName = filename.toLowerCase();
-                const ext = lowerName.substring(lowerName.lastIndexOf("."));
+                const ext = filename.toLowerCase().substring(filename.lastIndexOf("."));
 
-                // 1. Arquivo executável solto -> SEMPRE CRÍTICO e MARCADO POR PADRÃO
+                // 1. Executáveis soltos suspeitos (conforme seu guia: exe de poucos bytes em appdata/temp)
                 if (bannedExtensions.includes(ext)) {
                     detectedAnomalies.push({
                         id: `ANOM_${detectedAnomalies.length}`,
                         filename: filename,
-                        ruleName: "Arquivo executável perigoso",
+                        ruleName: "Executável suspeito encontrado (Dropper/EXE)",
                         severity: "CRITICAL",
                         actionType: "DELETE_FILE",
                         actionDesc: "Excluir arquivo",
-                        snippet: { line: "Binário", text: "Arquivo executável inteiro suspeito (.exe / .bat / .vbs)" },
-                        checked: true // Críticos marcados por padrão
+                        snippet: { line: "Binário", text: "Arquivo executável solto no pacote (.exe)" },
+                        checked: true
                     });
-                    addLog(`[ PERIGO ] Arquivo executável suspeito encontrado: ${filename}`, "log-danger");
+                    addLog(`[ PERIGO ] Arquivo executável encontrado: ${filename}`, "log-danger");
                     continue;
                 }
 
-                // 2. Códigos em scripts
+                // 2. Varredura textual estrita baseada nas regras informadas
                 if (textExtensions.includes(ext)) {
                     let content = "";
                     try { content = await fileObj.async("string"); } catch (encErr) { continue; }
 
-                    let isWhitelisted = false;
-                    for (const white of memoryRST.whitelisted_contexts) {
-                        if (content.includes(white)) { isWhitelisted = true; break; }
-                    }
-
-                    // Regras Principais
                     for (const rule of memoryRST.rules) {
                         const regex = new RegExp(rule.regex, "gim");
                         if (regex.test(content)) {
                             const snippetInfo = extractCodeSnippet(content, rule.regex);
-                            // Regras críticas marcadas, regras "HIGH/Suspeito" vêm DESMARCADAS por padrão
-                            const isCritical = (rule.severity === "CRITICAL");
-
+                            
                             detectedAnomalies.push({
                                 id: `ANOM_${detectedAnomalies.length}`,
                                 filename: filename,
@@ -281,36 +268,11 @@
                                 severity: rule.severity,
                                 actionType: rule.action,
                                 regex: rule.regex,
-                                actionDesc: rule.desc || "Apagar código",
+                                actionDesc: rule.desc,
                                 snippet: snippetInfo,
-                                checked: isCritical // Suspeito = desmarcado!
+                                checked: true // Marcado por ser uma assinatura exata confirmada
                             });
-                            addLog(`[ PERIGO ] ${rule.name} encontrado em: ${filename}`, "log-danger");
-                        }
-                    }
-
-                    // Palavras-Chave de Vírus -> SEVERIDADE HIGH ("Suspeito") = DESMARCADO POR PADRÃO
-                    if (!isWhitelisted) {
-                        for (const kw of memoryRST.keywords_blacklist) {
-                            if (["imgui", "directx", "opengl", "vendor", "backend"].some(safe => lowerName.includes(safe))) {
-                                if (kw.length < 8) continue;
-                            }
-
-                            if (content.includes(kw)) {
-                                const snippetInfo = extractCodeSnippet(content, kw);
-                                detectedAnomalies.push({
-                                    id: `ANOM_${detectedAnomalies.length}`,
-                                    filename: filename,
-                                    ruleName: `Nome de vírus/grabber conhecido ('${kw}')`,
-                                    severity: "HIGH",
-                                    actionType: "REMOVE_KEYWORD_LINE",
-                                    keyword: kw,
-                                    actionDesc: "Apagar linha",
-                                    snippet: snippetInfo,
-                                    checked: false // DESMARCADO POR PADRÃO POR SER SUSPEITO/HEURÍSTICA
-                                });
-                                addLog(`[ Aviso ] Assinatura de vírus ('${kw}') encontrada em: ${filename}`, "log-warn");
-                            }
+                            addLog(`[ PERIGO ] Assinatura exata (${rule.name}) encontrada em: ${filename}`, "log-danger");
                         }
                     }
                 }
@@ -323,17 +285,13 @@
             const statStatus = document.getElementById("stat-status");
             if (detectedAnomalies.length > 0) {
                 if (statStatus) { statStatus.textContent = "INFECTADO"; statStatus.className = "stat-number val-red"; }
-                addLog(`[ Concluído ] Encontramos ${detectedAnomalies.length} problemas no seu arquivo!`, "log-warn");
+                addLog(`[ Concluído ] Encontramos ${detectedAnomalies.length} infecções exatas do guia!`, "log-warn");
                 
-                // Exibir a tabela e ESTAMPAR NA TELA (Rolagem automática + Destaque de borda)
                 renderVTDashboard();
                 const vtDashboard = document.getElementById("vt-dashboard");
                 if (vtDashboard) {
                     vtDashboard.classList.add("highlight-alert");
-                    // Rola suavemente até o painel obrigando a pessoa a revisar
-                    setTimeout(() => {
-                        vtDashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 300);
+                    setTimeout(() => { vtDashboard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
                 }
                 
                 const btnCompile = document.getElementById("btn-compile");
@@ -344,7 +302,7 @@
                 }
             } else {
                 if (statStatus) { statStatus.textContent = "LIMPO"; statStatus.className = "stat-number val-green"; }
-                addLog("[ Seguro ] Nenhum vírus ou grabber foi encontrado no seu arquivo!", "log-clean");
+                addLog("[ Seguro ] Nenhuma das assinaturas citadas no seu guia foi encontrada!", "log-clean");
                 const btnCompile = document.getElementById("btn-compile");
                 if (btnCompile) {
                     const btnSpan = btnCompile.querySelector("span");
@@ -353,15 +311,12 @@
             }
 
         } catch (error) {
-            if (error.message && (error.message.includes("encrypted") || error.message.includes("password"))) {
-                addLog("[ Erro ] O arquivo tem senha. Digite a senha no campo acima e selecione o arquivo novamente.", "log-danger");
-            } else { addLog(`[ Erro ] Não foi possível ler o arquivo enviado.`, "log-danger"); }
+            addLog(`[ Erro ] Não foi possível ler o arquivo: ${error.message}`, "log-danger");
             const statStatus = document.getElementById("stat-status");
             if (statStatus) { statStatus.textContent = "ERRO"; statStatus.className = "stat-number val-red"; }
         }
     }
 
-    // TABELA COM PRÉ-VISUALIZAÇÃO DE TRECHO DO CÓDIGO
     function renderVTDashboard() {
         const vtTbody = document.getElementById("vt-tbody");
         if (!vtTbody) return;
@@ -373,14 +328,11 @@
 
         detectedAnomalies.forEach((item, index) => {
             const tr = document.createElement("tr");
-            let sevText = "Atenção";
-            let sevClass = "sev-MEDIUM";
-            if (item.severity === "CRITICAL") { sevText = "Perigo Alto"; sevClass = "sev-CRITICAL"; }
-            if (item.severity === "HIGH") { sevText = "Suspeito"; sevClass = "sev-HIGH"; }
+            let sevText = "Crítico";
+            let sevClass = "sev-CRITICAL";
 
-            // Montar o box do trecho do código infectado
             const snippetLine = item.snippet?.line ? `Linha ${item.snippet.line}:` : "Trecho:";
-            const snippetText = item.snippet?.text || "Oculto em arquivo binário";
+            const snippetText = item.snippet?.text || "Bloco malicioso detectado";
 
             tr.innerHTML = `
                 <td style="text-align: center; vertical-align: middle;">
@@ -410,6 +362,7 @@
         addLog(`[ Ajuste ] O arquivo '${detectedAnomalies[index].filename}' ${isChecked ? "será limpo" : "será mantido como está"}.`, "log-info");
     };
 
+    // LIMPEZA E COMPILAÇÃO (APLICANDO AS REGRAS DO GUIA ORIGINAL)
     async function applySanitizationAndCompile() {
         const btnCompile = document.getElementById("btn-compile");
         if (btnCompile) {
@@ -418,7 +371,7 @@
             if (btnSpan) btnSpan.textContent = "Limpando e criando arquivo...";
         }
         
-        addLog("[ Sistema ] Removendo os vírus selecionados...", "log-sys");
+        addLog("[ Sistema ] Aplicando as regras de remoção do guia...", "log-sys");
         const cleanZip = new JSZip();
         const entries = Object.keys(loadedZipObject.files);
         let removedFilesCount = 0;
@@ -427,6 +380,15 @@
         for (const filename of entries) {
             const fileObj = loadedZipObject.files[filename];
             if (fileObj.dir) { cleanZip.folder(filename); continue; }
+
+            // Se for arquivo .sln e o usuário marcou para limpar a source, podemos apagar o .sln conforme o guia diz: "Primeiro apague o arquivo .sln"
+            if (filename.toLowerCase().endsWith(".sln")) {
+                const hasInfectedVcxproj = detectedAnomalies.some(a => a.checked);
+                if (hasInfectedVcxproj) {
+                    addLog(`[ Guia ] Arquivo .sln antigo ignorado/apagado para ser recriado: ${filename}`, "log-warn");
+                    continue; // Pula o .sln antigo para forçar o usuário a abrir no Visual Studio e gerar um novo conforme o passo a passo
+                }
+            }
 
             const deleteOrders = detectedAnomalies.filter(a => a.filename === filename && a.actionType === "DELETE_FILE" && a.checked);
             if (deleteOrders.length > 0) {
@@ -439,21 +401,20 @@
             if (modifyOrders.length > 0) {
                 let content = await fileObj.async("string");
                 modifyOrders.forEach(order => {
-                    if (order.actionType === "REMOVE_BLOCK" || order.actionType === "REMOVE_LINE") {
+                    if (order.actionType === "REMOVE_BLOCK") {
+                        // Remove tudo entre <PreBuildEvent> e </PreBuildEvent>
                         const reg = new RegExp(order.regex, "gim");
                         content = content.replace(reg, "");
-                    } else if (order.actionType === "REPLACE_NULL") {
-                        const reg = new RegExp(order.regex, "gim");
-                        content = content.replace(reg, "https://discord.com/api/webhooks/LINK_DE_VIRUS_REMOVIDO");
-                    } else if (order.actionType === "REMOVE_KEYWORD_LINE") {
+                    } else if (order.actionType === "REMOVE_LINE") {
+                        // Remove a linha inteira onde a string maliciosa está presente
                         const lines = content.split("\n");
-                        const cleanLines = lines.filter(l => !l.includes(order.keyword));
+                        const cleanLines = lines.filter(l => !l.includes(order.regex) && !l.includes("Fwfkuuv157wg2gjthwla0lwbo1493h7") && !l.includes("exo-api.tf"));
                         content = cleanLines.join("\n");
                     }
                 });
                 cleanZip.file(filename, content);
                 modifiedFilesCount++;
-                addLog(`[ Limpo ] Vírus removido de dentro de: ${filename}`, "log-clean");
+                addLog(`[ Limpo ] Assinatura removida de dentro de: ${filename}`, "log-clean");
             } else {
                 const binaryData = await fileObj.async("blob");
                 cleanZip.file(filename, binaryData);
@@ -479,7 +440,7 @@
         if (statStatus) { statStatus.textContent = "PURIFICADO"; statStatus.className = "stat-number val-green"; }
         if (btnCompile) { const btnSpan = btnCompile.querySelector("span"); if (btnSpan) btnSpan.textContent = "Limpeza Concluída!"; }
         
-        addLog(`[ Sucesso ] Tudo pronto! Apagamos ${removedFilesCount} arquivos perigosos e limpamos o código de ${modifiedFilesCount} arquivos. Clique no botão verde para baixar!`, "log-clean");
+        addLog(`[ Sucesso ] Pronto! Siga o restante do guia (abra o .vcxproj no Visual Studio e salve um novo .sln). Clique no botão verde para baixar!`, "log-clean");
     }
 
 })();
