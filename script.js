@@ -1,15 +1,14 @@
 /**
  * ============================================================================
- * ZAKE ANTI GRABBER // SCRIPT.JS (CORRIGIDO - ZERO FALSOS POSITIVOS)
+ * ZAKE ANTI GRABBER // SCRIPT.JS (REVISÃO OBRIGATÓRIA & PREVIEW DE CÓDIGO)
  * ============================================================================
  */
 
 (function () {
     'use strict';
 
-    // Banco de dados otimizado (sem palavras curtas que geram falso positivo)
     let memoryRST = {
-        metadata: { version: "4.1", author: "Zake", total_signatures: 0 },
+        metadata: { version: "4.2", author: "Zake", total_signatures: 0 },
         whitelisted_contexts: [
             "require('discord.js')", "require(\"discord.js\")", "import discord", 
             "from discord", "discord.Client", "discord.WebhookClient", "https://discord.gg/",
@@ -45,7 +44,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         setupEventListeners();
-        addLog("[ Sistema ] Pronto para verificar seus arquivos (Modo de Precisão Ativado).", "log-sys");
+        addLog("[ Sistema ] Pronto para verificar seus arquivos.", "log-sys");
         loadMemoryRSTData();
     });
 
@@ -56,13 +55,12 @@
             const data = await response.json();
             
             if (data && data.rules && data.keywords_blacklist) {
-                // Filtramos a blacklist externa para remover palavras curtas (< 4 letras) que causam falso positivo
                 data.keywords_blacklist = data.keywords_blacklist.filter(kw => kw.length >= 4 && !["token", "rat", "chat", "host", "link", "temp", "bind", "info"].includes(kw.toLowerCase()));
                 memoryRST = data;
                 const total = (memoryRST.rules.length || 0) + (memoryRST.keywords_blacklist.length || 0);
                 const dbCount = document.getElementById("db-count");
                 if (dbCount) dbCount.textContent = `${total} vírus conhecidos`;
-                addLog(`[ Sistema ] Base de dados carregada com sucesso (${total} assinaturas precisas).`, "log-sys");
+                addLog(`[ Sistema ] Base de dados carregada via servidor (${total} assinaturas).`, "log-sys");
             }
         } catch (error) {
             const total = (memoryRST.rules?.length || 0) + (memoryRST.keywords_blacklist?.length || 0);
@@ -107,7 +105,7 @@
                                 const total = memoryRST.rules.length + memoryRST.keywords_blacklist.length;
                                 const dbCount = document.getElementById("db-count");
                                 if (dbCount) dbCount.textContent = `${total} vírus conhecidos`;
-                                addLog("[ Sistema ] Nova lista de vírus aplicada (com filtro anti falso-positivo)!", "log-sys");
+                                addLog("[ Sistema ] Nova lista de vírus aplicada com sucesso!", "log-sys");
                             }
                         } catch (err) { addLog("[ Erro ] O arquivo .json enviado é inválido.", "log-danger"); }
                     };
@@ -171,7 +169,10 @@
         if (statStatus) { statStatus.textContent = "VERIFICANDO..."; statStatus.className = "stat-number val-yellow"; }
         
         const vtDashboard = document.getElementById("vt-dashboard");
-        if (vtDashboard) vtDashboard.classList.add("hidden-section");
+        if (vtDashboard) {
+            vtDashboard.classList.add("hidden-section");
+            vtDashboard.classList.remove("highlight-alert");
+        }
         
         const vtTbody = document.getElementById("vt-tbody");
         if (vtTbody) vtTbody.innerHTML = "";
@@ -187,8 +188,26 @@
         if (btnDownload) btnDownload.classList.add("hidden-btn");
     }
 
+    /**
+     * Função auxiliar para encontrar em que linha o vírus está e extrair uma prévia (snippet)
+     */
+    function extractCodeSnippet(content, patternMatch) {
+        const lines = content.split(/\r?\n/);
+        for (let idx = 0; idx < lines.length; idx++) {
+            if (lines[idx].includes(patternMatch) || new RegExp(patternMatch, "i").test(lines[idx])) {
+                const lineNumber = idx + 1;
+                const snippetText = lines[idx].trim();
+                return {
+                    line: lineNumber,
+                    text: snippetText.length > 80 ? snippetText.substring(0, 80) + "..." : snippetText
+                };
+            }
+        }
+        return { line: "?", text: "Trecho oculto em bloco ou hexadecimal." };
+    }
+
     // ============================================================================
-    // MOTOR DE VARREDURA DE ALTA PRECISÃO
+    // MOTOR DE VARREDURA
     // ============================================================================
     async function startScan(file) {
         resetSystem();
@@ -206,7 +225,7 @@
             loadedZipObject = await zip.loadAsync(file, { password: password || undefined });
             
             const entries = Object.keys(loadedZipObject.files);
-            addLog(`[ Sistema ] Arquivo aberto! Verificando ${entries.length} itens internos com filtro de precisão...`, "log-info");
+            addLog(`[ Sistema ] Arquivo aberto! Verificando ${entries.length} itens internos...`, "log-info");
             
             const bannedExtensions = [".exe", ".scr", ".vbs", ".bat", ".cmd", ".ps1", ".pif"];
             const textExtensions = [".vcxproj", ".sln", ".cpp", ".h", ".hpp", ".c", ".cs", ".js", ".ts", ".py", ".txt", ".json", ".xml", ".html", ".css", ".md", ".ini", ".php"];
@@ -221,36 +240,40 @@
                 const lowerName = filename.toLowerCase();
                 const ext = lowerName.substring(lowerName.lastIndexOf("."));
 
-                // 1. Arquivos executáveis soltos (vírus ou scripts executáveis)
+                // 1. Arquivo executável solto -> SEMPRE CRÍTICO e MARCADO POR PADRÃO
                 if (bannedExtensions.includes(ext)) {
                     detectedAnomalies.push({
                         id: `ANOM_${detectedAnomalies.length}`,
                         filename: filename,
-                        ruleName: "Arquivo executável suspeito encontrado",
+                        ruleName: "Arquivo executável perigoso",
                         severity: "CRITICAL",
                         actionType: "DELETE_FILE",
-                        actionDesc: "Excluir arquivo completamente",
-                        checked: true
+                        actionDesc: "Excluir arquivo",
+                        snippet: { line: "Binário", text: "Arquivo executável inteiro suspeito (.exe / .bat / .vbs)" },
+                        checked: true // Críticos marcados por padrão
                     });
                     addLog(`[ PERIGO ] Arquivo executável suspeito encontrado: ${filename}`, "log-danger");
                     continue;
                 }
 
-                // 2. Códigos em scripts ou arquivos c++/c#
+                // 2. Códigos em scripts
                 if (textExtensions.includes(ext)) {
                     let content = "";
                     try { content = await fileObj.async("string"); } catch (encErr) { continue; }
 
-                    // Se contiver elementos conhecidos de whitelist, nós ignoramos certas palavras comuns
                     let isWhitelisted = false;
                     for (const white of memoryRST.whitelisted_contexts) {
                         if (content.includes(white)) { isWhitelisted = true; break; }
                     }
 
-                    // Checagem de Regras (Injeções Reais no Visual Studio ou Webhooks)
+                    // Regras Principais
                     for (const rule of memoryRST.rules) {
                         const regex = new RegExp(rule.regex, "gim");
                         if (regex.test(content)) {
+                            const snippetInfo = extractCodeSnippet(content, rule.regex);
+                            // Regras críticas marcadas, regras "HIGH/Suspeito" vêm DESMARCADAS por padrão
+                            const isCritical = (rule.severity === "CRITICAL");
+
                             detectedAnomalies.push({
                                 id: `ANOM_${detectedAnomalies.length}`,
                                 filename: filename,
@@ -258,31 +281,33 @@
                                 severity: rule.severity,
                                 actionType: rule.action,
                                 regex: rule.regex,
-                                actionDesc: rule.desc || "Apagar código malicioso",
-                                checked: true
+                                actionDesc: rule.desc || "Apagar código",
+                                snippet: snippetInfo,
+                                checked: isCritical // Suspeito = desmarcado!
                             });
                             addLog(`[ PERIGO ] ${rule.name} encontrado em: ${filename}`, "log-danger");
                         }
                     }
 
-                    // Checagem por Palavra-Chave de Vírus (Com proteção anti falso positivo)
+                    // Palavras-Chave de Vírus -> SEVERIDADE HIGH ("Suspeito") = DESMARCADO POR PADRÃO
                     if (!isWhitelisted) {
                         for (const kw of memoryRST.keywords_blacklist) {
-                            // Ignora palavras curtas se for arquivo C++ do ImGui, DirectX, OpenGL ou DirectX
                             if (["imgui", "directx", "opengl", "vendor", "backend"].some(safe => lowerName.includes(safe))) {
-                                if (kw.length < 8) continue; // Só aponta se for palavra longa e clara de vírus
+                                if (kw.length < 8) continue;
                             }
 
                             if (content.includes(kw)) {
+                                const snippetInfo = extractCodeSnippet(content, kw);
                                 detectedAnomalies.push({
                                     id: `ANOM_${detectedAnomalies.length}`,
                                     filename: filename,
-                                    ruleName: `Assinatura clara de grabber/vírus ('${kw}')`,
+                                    ruleName: `Nome de vírus/grabber conhecido ('${kw}')`,
                                     severity: "HIGH",
                                     actionType: "REMOVE_KEYWORD_LINE",
                                     keyword: kw,
-                                    actionDesc: "Apagar linha infectada",
-                                    checked: true
+                                    actionDesc: "Apagar linha",
+                                    snippet: snippetInfo,
+                                    checked: false // DESMARCADO POR PADRÃO POR SER SUSPEITO/HEURÍSTICA
                                 });
                                 addLog(`[ Aviso ] Assinatura de vírus ('${kw}') encontrada em: ${filename}`, "log-warn");
                             }
@@ -292,31 +317,51 @@
             }
 
             document.getElementById("stat-threats").textContent = detectedAnomalies.length;
-            document.getElementById("stat-pending").textContent = detectedAnomalies.length;
+            const initialCheckedCount = detectedAnomalies.filter(a => a.checked).length;
+            document.getElementById("stat-pending").textContent = initialCheckedCount;
             
             const statStatus = document.getElementById("stat-status");
             if (detectedAnomalies.length > 0) {
                 if (statStatus) { statStatus.textContent = "INFECTADO"; statStatus.className = "stat-number val-red"; }
-                addLog(`[ Concluído ] Encontramos ${detectedAnomalies.length} ameaças reais no seu arquivo!`, "log-warn");
+                addLog(`[ Concluído ] Encontramos ${detectedAnomalies.length} problemas no seu arquivo!`, "log-warn");
+                
+                // Exibir a tabela e ESTAMPAR NA TELA (Rolagem automática + Destaque de borda)
                 renderVTDashboard();
+                const vtDashboard = document.getElementById("vt-dashboard");
+                if (vtDashboard) {
+                    vtDashboard.classList.add("highlight-alert");
+                    // Rola suavemente até o painel obrigando a pessoa a revisar
+                    setTimeout(() => {
+                        vtDashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                }
+                
                 const btnCompile = document.getElementById("btn-compile");
-                if (btnCompile) btnCompile.removeAttribute("disabled");
+                if (btnCompile) {
+                    btnCompile.removeAttribute("disabled");
+                    const btnSpan = btnCompile.querySelector("span");
+                    if (btnSpan) btnSpan.textContent = "⚠️ Revise as marcações acima antes de compilar";
+                }
             } else {
                 if (statStatus) { statStatus.textContent = "LIMPO"; statStatus.className = "stat-number val-green"; }
                 addLog("[ Seguro ] Nenhum vírus ou grabber foi encontrado no seu arquivo!", "log-clean");
                 const btnCompile = document.getElementById("btn-compile");
-                if (btnCompile) btnCompile.querySelector("span").textContent = "O arquivo já está seguro!";
+                if (btnCompile) {
+                    const btnSpan = btnCompile.querySelector("span");
+                    if (btnSpan) btnSpan.textContent = "O arquivo já está seguro!";
+                }
             }
 
         } catch (error) {
             if (error.message && (error.message.includes("encrypted") || error.message.includes("password"))) {
-                addLog("[ Erro ] O arquivo tem senha. Por favor, digite a senha no campo acima e arraste o arquivo de novo.", "log-danger");
+                addLog("[ Erro ] O arquivo tem senha. Digite a senha no campo acima e selecione o arquivo novamente.", "log-danger");
             } else { addLog(`[ Erro ] Não foi possível ler o arquivo enviado.`, "log-danger"); }
             const statStatus = document.getElementById("stat-status");
             if (statStatus) { statStatus.textContent = "ERRO"; statStatus.className = "stat-number val-red"; }
         }
     }
 
+    // TABELA COM PRÉ-VISUALIZAÇÃO DE TRECHO DO CÓDIGO
     function renderVTDashboard() {
         const vtTbody = document.getElementById("vt-tbody");
         if (!vtTbody) return;
@@ -333,16 +378,26 @@
             if (item.severity === "CRITICAL") { sevText = "Perigo Alto"; sevClass = "sev-CRITICAL"; }
             if (item.severity === "HIGH") { sevText = "Suspeito"; sevClass = "sev-HIGH"; }
 
+            // Montar o box do trecho do código infectado
+            const snippetLine = item.snippet?.line ? `Linha ${item.snippet.line}:` : "Trecho:";
+            const snippetText = item.snippet?.text || "Oculto em arquivo binário";
+
             tr.innerHTML = `
-                <td style="text-align: center;">
-                    <input type="checkbox" id="chk_${index}" checked onchange="toggleAnomaly(${index}, this.checked)" class="custom-checkbox" />
+                <td style="text-align: center; vertical-align: middle;">
+                    <input type="checkbox" id="chk_${index}" ${item.checked ? "checked" : ""} onchange="toggleAnomaly(${index}, this.checked)" class="custom-checkbox" />
                 </td>
-                <td style="font-weight: 600; color: #fff;">${item.filename}</td>
-                <td>
+                <td style="font-weight: 600; color: #fff; vertical-align: middle;">${item.filename}</td>
+                <td style="vertical-align: middle;">
                     <span style="display: block; margin-bottom: 3px;">${item.ruleName}</span>
                     <span class="tag-severity ${sevClass}">${sevText}</span>
                 </td>
-                <td style="color: var(--color-yellow); font-weight: 500;">${item.actionDesc}</td>
+                <td style="vertical-align: middle;">
+                    <div class="code-snippet-box">
+                        <span class="code-snippet-line">${snippetLine}</span>
+                        <code>${snippetText}</code>
+                    </div>
+                </td>
+                <td style="color: var(--color-yellow); font-weight: 500; vertical-align: middle;">${item.actionDesc}</td>
             `;
             vtTbody.appendChild(tr);
         });
