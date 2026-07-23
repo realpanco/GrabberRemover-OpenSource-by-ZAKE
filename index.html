@@ -7,12 +7,12 @@
     <meta name="theme-color" content="#121212" />
     <meta name="description" content="Zake Anti Grabber - Limpe seus projetos de jogos, mods e códigos de vírus e roubadores de contas facilmente." />
     
-    <title data-i18n="meta.title">AntiGrab by Zake | Removedor de Vírus</title>
+    <title data-i18n="meta.title">Zake Anti Grabber | Removedor de Vírus</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://i.imgur.com/JrFyZXm.png" />
 
-    <!-- Google Fonts: Rubik & Inter (Fontes limpas e de fácil leitura) -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -28,7 +28,7 @@
     <!-- Container Principal -->
     <div class="app-container">
         
-        <!-- CABEÇALHO SIMPLES -->
+        <!-- CABEÇALHO -->
         <header class="navbar clean-card">
             <div class="navbar-brand">
                 <a href="#" class="brand-link">
@@ -39,12 +39,11 @@
                         </svg>
                     </div>
                     <div class="brand-text">
-                        <span class="brand-title">AntiGrabber by<strong> Zake</strong></span>
+                        <span class="brand-title">Zake <strong>Anti Grabber</strong></span>
                     </div>
                 </a>
             </div>
 
-            <!-- Apenas o botão de atualizar a lista de vírus, sem decorações inúteis -->
             <div class="navbar-actions">
                 <input type="file" id="jsonInput" accept=".json" class="hidden-input" />
                 <button type="button" class="btn btn-outline btn-sm" id="btn-import-json">
@@ -53,17 +52,17 @@
             </div>
         </header>
 
-        <!-- APRESENTAÇÃO DIRETA E CLARA PARA LEIGOS -->
+        <!-- APRESENTAÇÃO -->
         <section class="hero-section clean-card">
-            <h1 class="hero-title" data-i18n="hero.title">Remove Grabbers from Source</h1>
+            <h1 class="hero-title" data-i18n="hero.title">Removedor de Vírus e Grabbers</h1>
             <p class="hero-description" data-i18n="hero.description">
-                Feito totalmente pra remover os Grabbers do Passa Fomes que ganham divulgações da forma mais Retardada possível, e eu mesmo ZAKE sou o dono do projeto e eu mesmo dei LEAK se for dar leak poe credito.
+                Limpe seus projetos, mods e arquivos de jogos de vírus que roubam contas do Discord, senhas e navegadores. O processo é feito 100% no seu computador, de forma segura e rápida.
+            </p>
         </section>
 
         <!-- ÁREA DE TRABALHO -->
         <main class="workspace-section">
             
-            <!-- Barra com instrução e campo de senha caso o arquivo esteja trancado -->
             <div class="toolbar-card clean-card">
                 <div class="toolbar-info">
                     <span data-i18n="toolbar.instruction">Coloque seu arquivo <strong>.ZIP</strong> ou <strong>.RAR</strong> abaixo para verificar.</span>
@@ -75,7 +74,7 @@
                 </div>
             </div>
 
-            <!-- CAIXA DE ARRASTAR E SOLTAR O ARQUIVO (DROPZONE) -->
+            <!-- DROPZONE -->
             <div class="dropzone-card" id="dropzone">
                 <input type="file" id="fileInput" accept=".zip,.rar" class="hidden-input" />
                 <div class="dropzone-content">
@@ -89,7 +88,7 @@
                 </div>
             </div>
 
-            <!-- GRADE DE ESTATÍSTICAS (ÚNICA PARTE COLORIDA) -->
+            <!-- GRADE DE ESTATÍSTICAS -->
             <div class="stats-grid">
                 <div class="stat-card clean-card">
                     <span class="stat-label" data-i18n="stats.total_label">Arquivos Lidos</span>
@@ -108,14 +107,17 @@
 
                 <div class="stat-card clean-card">
                     <span class="stat-label" data-i18n="stats.status_label">Status</span>
-                    <div class="stat-number val-green" id="stat-status" data-i18n="stats.status_default">...</div>
+                    <div class="stat-number val-green" id="stat-status" data-i18n="stats.status_default">AGUARDANDO</div>
                 </div>
             </div>
 
-            <!-- PAINEL DE REMOÇÃO DE VÍRUS -->
+            <!-- PAINEL DE REMOÇÃO DE VÍRUS (ESTAMPADO NA TELA) -->
             <section class="audit-section clean-card hidden-section" id="vt-dashboard">
                 <div class="audit-header">
-                    <h3 class="audit-title" data-i18n="audit.title">O que encontramos no seu arquivo</h3>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <h3 class="audit-title" data-i18n="audit.title">⚠️ Revisão Obrigatória: O que encontramos no arquivo</h3>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Verifique os trechos detectados abaixo. Itens "Suspeitos" vêm desmarcados por padrão por segurança.</span>
+                    </div>
                     <div class="audit-summary-badge" id="vt-summary">0 Ameaças</div>
                 </div>
                 
@@ -123,10 +125,11 @@
                     <table class="audit-table">
                         <thead>
                             <tr>
-                                <th style="width: 10%; text-align: center;" data-i18n="table.th_action">Apagar?</th>
-                                <th style="width: 35%;" data-i18n="table.th_file">Arquivo</th>
-                                <th style="width: 30%;" data-i18n="table.th_rule">O que é isso?</th>
-                                <th style="width: 25%;" data-i18n="table.th_treatment">O que vamos fazer</th>
+                                <th style="width: 8%; text-align: center;" data-i18n="table.th_action">Apagar?</th>
+                                <th style="width: 25%;" data-i18n="table.th_file">Arquivo</th>
+                                <th style="width: 22%;" data-i18n="table.th_rule">Motivo / Gravidade</th>
+                                <th style="width: 30%;" data-i18n="table.th_snippet">Trecho Detectado</th>
+                                <th style="width: 15%;" data-i18n="table.th_treatment">O que faremos</th>
                             </tr>
                         </thead>
                         <tbody id="vt-tbody"></tbody>
@@ -134,12 +137,11 @@
                 </div>
             </section>
 
-            <!-- TERMINAL COM OS AVISOS EM TEMPO REAL (COLORIDO NAS MENSAGENS) -->
+            <!-- TERMINAL COM OS AVISOS EM TEMPO REAL -->
             <section class="terminal-section clean-card">
                 <div class="terminal-topbar">
                     <span class="terminal-title" data-i18n="terminal.title">Avisos do Sistema</span>
                     
-                    <!-- Filtros simples -->
                     <div class="terminal-filters">
                         <button type="button" class="t-btn active" data-filter="all" id="btn-filter-all" data-i18n="terminal.filter_all">Todos</button>
                         <button type="button" class="t-btn" data-filter="log-danger" id="btn-filter-danger" data-i18n="terminal.filter_danger">Perigos</button>
@@ -163,7 +165,7 @@
             <section class="action-section clean-card">
                 <div class="action-info">
                     <h4 class="action-heading" data-i18n="action.heading">Pronto para limpar o arquivo?</h4>
-                    <p class="action-subheading" data-i18n="action.subheading">Nós vamos criar uma cópia novinha do seu arquivo, sem os vírus selecionados.</p>
+                    <p class="action-subheading" data-i18n="action.subheading">Nós vamos criar uma cópia novinha do seu arquivo, aplicando apenas as opções marcadas acima.</p>
                 </div>
 
                 <div class="action-buttons-group">
@@ -181,14 +183,13 @@
         <!-- RODAPÉ SÓBRIO -->
         <footer class="app-footer">
             <div class="footer-container">
-                <span data-i18n="footer.security">Entre no meu <a href="https://discord.gg/7v6g9k2" target="_blank" rel="noopener noreferrer">Discord</a></span>
+                <span data-i18n="footer.security">🔒 Seguro e sem envio de arquivos para a internet</span>
                 <span class="footer-divider">•</span>
-                <span data-i18n="footer.rights">Se for vazar pelo menos dá credito</span>
+                <span data-i18n="footer.rights">© 2026 Zake Anti Grabber</span>
             </div>
         </footer>
     </div>
 
-    <!-- Script Principal -->
     <script src="script.js"></script>
 </body>
 </html>
