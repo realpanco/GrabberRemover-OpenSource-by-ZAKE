@@ -8,7 +8,8 @@ Fiz esse removedor de grabber pq tem mt guri q não sabe tirar grabb e fica chor
 ## OBS
 
 deixando claro que esse arquivo é muito importante
-- **`memory_rst.json`**: arquivo de config e reset de memória do sistema;
+- **`memory_rst.json`**: arquivo de config e reset de memória do sistema
+
 Usei IA pra deixar o codigo mais facil de entender se a explicação ficar uma mrd fds
 
 ---
