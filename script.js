@@ -1,14 +1,13 @@
 /**
  * ============================================================================
- * ZAKE ANTI GRABBER // SCRIPT.JS
- * Sistema de Limpeza de Vírus e Grabbers em Projetos e Mods
+ * ZAKE ANTI GRABBER // SCRIPT.JS (CORRIGIDO)
  * ============================================================================
  */
 
 (function () {
     'use strict';
 
-    // Banco de dados padrão (caso o arquivo memory_rst.json não seja carregado)
+    // Banco de dados interno de emergência (caso o memory_rst.json não seja encontrado)
     let memoryRST = {
         metadata: { version: "4.0", author: "Zake", total_signatures: 0 },
         whitelisted_contexts: [
@@ -43,64 +42,92 @@
     let detectedAnomalies = [];
     let countTotal = 0;
 
-    // INICIALIZAÇÃO
-    document.addEventListener("DOMContentLoaded", async () => {
-        addLog("[ Sistema ] Inicializando removedor de vírus Zake Anti Grabber...", "log-sys");
-        await loadMemoryRSTData();
+    // INICIALIZAÇÃO IMEDIATA DOS EVENTOS
+    document.addEventListener("DOMContentLoaded", () => {
         setupEventListeners();
+        addLog("[ Sistema ] Pronto para verificar seus arquivos.", "log-sys");
+        loadMemoryRSTData(); // Carrega o JSON do servidor em segundo plano sem travar o clique
     });
 
     /**
-     * Carrega a lista de vírus atualizada do servidor (memory_rst.json)
+     * Tenta carregar o memory_rst.json se estiver rodando em servidor
      */
     async function loadMemoryRSTData() {
         try {
             const response = await fetch('memory_rst.json', { cache: 'no-store' });
-            if (!response.ok) throw new Error("Falha no servidor");
+            if (!response.ok) throw new Error("HTTP Error");
             const data = await response.json();
             
-            if (data.rules && data.keywords_blacklist) {
+            if (data && data.rules && data.keywords_blacklist) {
                 memoryRST = data;
                 const total = (memoryRST.rules.length || 0) + (memoryRST.keywords_blacklist.length || 0);
-                document.getElementById("db-count").textContent = `${total} vírus conhecidos`;
-                addLog(`[ Sistema ] Lista de vírus atualizada carregada (${total} assinaturas).`, "log-sys");
+                const dbCount = document.getElementById("db-count");
+                if (dbCount) dbCount.textContent = `${total} vírus conhecidos`;
+                addLog(`[ Sistema ] Base de dados atualizada via servidor (${total} assinaturas).`, "log-sys");
             }
         } catch (error) {
-            const total = memoryRST.rules.length + memoryRST.keywords_blacklist.length;
-            document.getElementById("db-count").textContent = `${total} vírus conhecidos (base interna)`;
-            addLog("[ Aviso ] Rodando com a base de dados interna offline.", "log-warn");
+            const total = (memoryRST.rules?.length || 0) + (memoryRST.keywords_blacklist?.length || 0);
+            const dbCount = document.getElementById("db-count");
+            if (dbCount) dbCount.textContent = `${total} vírus (base padrão)`;
         }
     }
 
-    // EVENTOS DO USUÁRIO
+    /**
+     * CONFIGURAÇÃO DOS EVENTOS DE CLIQUE E ARRASTAR
+     */
     function setupEventListeners() {
         const dropzone = document.getElementById("dropzone");
         const fileInput = document.getElementById("fileInput");
         const jsonInput = document.getElementById("jsonInput");
+        const btnImportJson = document.getElementById("btn-import-json");
         const btnClearTerminal = document.getElementById("btn-clear-terminal");
         const btnCompile = document.getElementById("btn-compile");
 
+        // 1. Clique na caixa para abrir a janela de arquivos
         if (dropzone && fileInput) {
-            dropzone.addEventListener("click", () => fileInput.click());
+            dropzone.addEventListener("click", () => {
+                fileInput.click();
+            });
+
+            // Arrastar sobre a caixa
             dropzone.addEventListener("dragover", (e) => {
                 e.preventDefault();
-                dropzone.style.borderColor = "#ffffff";
+                e.stopPropagation();
+                dropzone.classList.add("dragover");
             });
-            dropzone.addEventListener("dragleave", () => {
-                dropzone.style.borderColor = "";
+
+            // Sair de cima da caixa
+            dropzone.addEventListener("dragleave", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove("dragover");
             });
+
+            // Soltar o arquivo dentro da caixa
             dropzone.addEventListener("drop", (e) => {
                 e.preventDefault();
-                dropzone.style.borderColor = "";
-                if (e.dataTransfer.files.length > 0) startScan(e.dataTransfer.files[0]);
+                e.stopPropagation();
+                dropzone.classList.remove("dragover");
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    startScan(e.dataTransfer.files[0]);
+                }
             });
+
+            // Selecionar o arquivo pela janela do Windows
             fileInput.addEventListener("change", (e) => {
-                if (e.target.files.length > 0) startScan(e.target.files[0]);
+                if (e.target.files && e.target.files.length > 0) {
+                    startScan(e.target.files[0]);
+                }
             });
         }
 
-        // Importar lista customizada (.json)
-        if (jsonInput) {
+        // 2. Clique no botão de Importar JSON do topo
+        if (btnImportJson && jsonInput) {
+            btnImportJson.addEventListener("click", (e) => {
+                e.preventDefault();
+                jsonInput.click();
+            });
+
             jsonInput.addEventListener("change", (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -111,7 +138,8 @@
                             if (customJSON.rules && customJSON.keywords_blacklist) {
                                 memoryRST = customJSON;
                                 const total = memoryRST.rules.length + memoryRST.keywords_blacklist.length;
-                                document.getElementById("db-count").textContent = `${total} vírus conhecidos`;
+                                const dbCount = document.getElementById("db-count");
+                                if (dbCount) dbCount.textContent = `${total} vírus conhecidos`;
                                 addLog("[ Sistema ] Nova lista de vírus aplicada com sucesso!", "log-sys");
                             }
                         } catch (err) {
@@ -123,10 +151,17 @@
             });
         }
 
-        if (btnClearTerminal) btnClearTerminal.addEventListener("click", clearTerminal);
-        if (btnCompile) btnCompile.addEventListener("click", applySanitizationAndCompile);
+        // 3. Limpar Terminal
+        if (btnClearTerminal) {
+            btnClearTerminal.addEventListener("click", clearTerminal);
+        }
 
-        // Filtros simples do terminal
+        // 4. Botão de Compilação/Limpeza
+        if (btnCompile) {
+            btnCompile.addEventListener("click", applySanitizationAndCompile);
+        }
+
+        // 5. Filtros do Terminal
         document.querySelectorAll(".terminal-filters .t-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 const filterClass = e.target.getAttribute("data-filter");
@@ -135,7 +170,7 @@
         });
     }
 
-    // TELEMETRIA / MENSAGENS NA TELA
+    // TELEMETRIA E MENSAGENS NO CONSOLE DO SITE
     function addLog(text, className = "log-info") {
         const terminal = document.getElementById("terminal");
         if (!terminal) return;
@@ -177,23 +212,30 @@
         document.getElementById("stat-pending").textContent = "0";
         
         const statStatus = document.getElementById("stat-status");
-        statStatus.textContent = "VERIFICANDO...";
-        statStatus.className = "stat-number val-yellow";
+        if (statStatus) {
+            statStatus.textContent = "VERIFICANDO...";
+            statStatus.className = "stat-number val-yellow";
+        }
         
         const vtDashboard = document.getElementById("vt-dashboard");
         if (vtDashboard) vtDashboard.classList.add("hidden-section");
-        document.getElementById("vt-tbody").innerHTML = "";
+        
+        const vtTbody = document.getElementById("vt-tbody");
+        if (vtTbody) vtTbody.innerHTML = "";
         
         const btnCompile = document.getElementById("btn-compile");
-        btnCompile.setAttribute("disabled", "true");
-        btnCompile.querySelector("span").textContent = "1. Limpar e Criar Arquivo";
+        if (btnCompile) {
+            btnCompile.setAttribute("disabled", "true");
+            const btnSpan = btnCompile.querySelector("span");
+            if (btnSpan) btnSpan.textContent = "1. Limpar e Criar Arquivo";
+        }
         
         const btnDownload = document.getElementById("btn-download");
         if (btnDownload) btnDownload.classList.add("hidden-btn");
     }
 
     // ============================================================================
-    // MOTOR DE VERIFICAÇÃO DE VÍRUS
+    // MOTOR DE VARREDURA
     // ============================================================================
     async function startScan(file) {
         resetSystem();
@@ -202,13 +244,13 @@
         const passwordInput = document.getElementById("archivePassword");
         const password = passwordInput ? passwordInput.value.trim() : "";
 
-        addLog(`[ Sistema ] Abrindo o arquivo: ${originalFileName}`, "log-sys");
+        addLog(`[ Sistema ] Analisando o arquivo: ${originalFileName}`, "log-sys");
         
         if (isRar) {
             addLog("[ Aviso ] Arquivo .RAR detectado. Ele será verificado e transformado em um .ZIP limpo.", "log-warn");
         }
         if (password) {
-            addLog("[ Sistema ] Usando a senha informada para destrancar o arquivo...", "log-sys");
+            addLog("[ Sistema ] Usando a senha informada para abrir o arquivo...", "log-sys");
         }
 
         try {
@@ -216,11 +258,9 @@
             loadedZipObject = await zip.loadAsync(file, { password: password || undefined });
             
             const entries = Object.keys(loadedZipObject.files);
-            addLog(`[ Sistema ] Arquivo aberto com sucesso! Verificando ${entries.length} itens dentro dele...`, "log-info");
+            addLog(`[ Sistema ] Arquivo aberto com sucesso! Verificando ${entries.length} itens internos...`, "log-info");
             
-            // Extensões de arquivos perigosos
             const bannedExtensions = [".exe", ".scr", ".vbs", ".bat", ".cmd", ".ps1", ".pif"];
-            // Extensões de código onde os vírus se escondem
             const textExtensions = [".vcxproj", ".sln", ".cpp", ".h", ".hpp", ".c", ".cs", ".js", ".ts", ".py", ".txt", ".json", ".xml", ".html", ".css", ".md", ".ini", ".php"];
 
             for (let i = 0; i < entries.length; i++) {
@@ -233,7 +273,7 @@
                 const lowerName = filename.toLowerCase();
                 const ext = lowerName.substring(lowerName.lastIndexOf("."));
 
-                // 1. Achar arquivos executáveis soltos (vírus/trojans)
+                // 1. Arquivos executáveis soltos
                 if (bannedExtensions.includes(ext)) {
                     detectedAnomalies.push({
                         id: `ANOM_${detectedAnomalies.length}`,
@@ -244,11 +284,11 @@
                         actionDesc: "Excluir arquivo completamente",
                         checked: true
                     });
-                    addLog(`[ PERIGO ] Arquivo suspeito de ser vírus encontrado: ${filename}`, "log-danger");
+                    addLog(`[ PERIGO ] Arquivo executável suspeito encontrado: ${filename}`, "log-danger");
                     continue;
                 }
 
-                // 2. Achar códigos maliciosos dentro dos scripts do projeto
+                // 2. Códigos maliciosos dentro de scripts
                 if (textExtensions.includes(ext)) {
                     let content = "";
                     try {
@@ -257,7 +297,6 @@
                         continue;
                     }
 
-                    // Ignorar códigos seguros conhecidos (para não quebrar bibliotecas normais como discord.js)
                     let isWhitelisted = false;
                     for (const white of memoryRST.whitelisted_contexts) {
                         if (content.includes(white)) {
@@ -266,7 +305,6 @@
                         }
                     }
 
-                    // Checar contra as regras principais
                     for (const rule of memoryRST.rules) {
                         const regex = new RegExp(rule.regex, "gim");
                         if (regex.test(content)) {
@@ -284,7 +322,6 @@
                         }
                     }
 
-                    // Checar contra a lista de palavras de vírus conhecidos
                     if (!isWhitelisted) {
                         for (const kw of memoryRST.keywords_blacklist) {
                             if (content.includes(kw)) {
@@ -298,55 +335,57 @@
                                     actionDesc: "Apagar linha infectada",
                                     checked: true
                                 });
-                                addLog(`[ Aviso ] Palavra ligada a vírus ('${kw}') encontrada em: ${filename}`, "log-warn");
+                                addLog(`[ Aviso ] Termo suspeito ('${kw}') encontrado em: ${filename}`, "log-warn");
                             }
                         }
                     }
                 }
             }
 
-            // Atualizar os números na tela
             document.getElementById("stat-threats").textContent = detectedAnomalies.length;
             document.getElementById("stat-pending").textContent = detectedAnomalies.length;
             
             const statStatus = document.getElementById("stat-status");
             if (detectedAnomalies.length > 0) {
-                statStatus.textContent = "INFECTADO";
-                statStatus.className = "stat-number val-red";
-                
-                addLog(`[ Verificação Concluída ] Encontramos ${detectedAnomalies.length} problemas! Veja a tabela acima.`, "log-warn");
+                if (statStatus) {
+                    statStatus.textContent = "INFECTADO";
+                    statStatus.className = "stat-number val-red";
+                }
+                addLog(`[ Concluído ] Encontramos ${detectedAnomalies.length} problemas no seu arquivo!`, "log-warn");
                 renderVTDashboard();
-                document.getElementById("btn-compile").removeAttribute("disabled");
-            } else {
-                statStatus.textContent = "LIMPO";
-                statStatus.className = "stat-number val-green";
                 
-                addLog("[ Seguro ] Nenhum vírus ou grabber foi encontrado no seu arquivo!", "log-clean");
                 const btnCompile = document.getElementById("btn-compile");
-                btnCompile.querySelector("span").textContent = "O arquivo já está seguro!";
+                if (btnCompile) btnCompile.removeAttribute("disabled");
+            } else {
+                if (statStatus) {
+                    statStatus.textContent = "LIMPO";
+                    statStatus.className = "stat-number val-green";
+                }
+                addLog("[ Seguro ] Nenhum vírus foi encontrado no seu arquivo!", "log-clean");
             }
 
         } catch (error) {
-            if (error.message.includes("encrypted") || error.message.includes("password")) {
-                addLog("[ Erro ] O arquivo tem senha. Por favor, digite a senha no campo acima e arraste o arquivo de novo.", "log-danger");
+            if (error.message && (error.message.includes("encrypted") || error.message.includes("password"))) {
+                addLog("[ Erro ] O arquivo tem senha. Digite a senha no campo superior e selecione o arquivo novamente.", "log-danger");
             } else {
-                addLog(`[ Erro ] Não conseguimos ler o arquivo: ${error.message}`, "log-danger");
+                addLog(`[ Erro ] Não foi possível ler o arquivo enviado.`, "log-danger");
             }
             const statStatus = document.getElementById("stat-status");
-            statStatus.textContent = "ERRO";
-            statStatus.className = "stat-number val-red";
+            if (statStatus) {
+                statStatus.textContent = "ERRO";
+                statStatus.className = "stat-number val-red";
+            }
         }
     }
 
-    // ============================================================================
-    // TABELA SIMPLIFICADA DE RESULTADOS (4 COLUNAS)
-    // ============================================================================
+    // TABELA
     function renderVTDashboard() {
         const vtTbody = document.getElementById("vt-tbody");
         if (!vtTbody) return;
 
         vtTbody.innerHTML = "";
-        document.getElementById("vt-summary").textContent = `${detectedAnomalies.length} Ameaças`;
+        const vtSummary = document.getElementById("vt-summary");
+        if (vtSummary) vtSummary.textContent = `${detectedAnomalies.length} Ameaças`;
         
         const vtDashboard = document.getElementById("vt-dashboard");
         if (vtDashboard) vtDashboard.classList.remove("hidden-section");
@@ -354,7 +393,6 @@
         detectedAnomalies.forEach((item, index) => {
             const tr = document.createElement("tr");
             
-            // Traduzir gravidade para termos super simples
             let sevText = "Atenção";
             let sevClass = "sev-MEDIUM";
             if (item.severity === "CRITICAL") { sevText = "Perigo Alto"; sevClass = "sev-CRITICAL"; }
@@ -382,15 +420,16 @@
         addLog(`[ Ajuste ] O arquivo '${detectedAnomalies[index].filename}' ${isChecked ? "será limpo" : "será mantido como está"}.`, "log-info");
     };
 
-    // ============================================================================
-    // CRIAR E BAIXAR O NOVO ARQUIVO LIMPO
-    // ============================================================================
+    // COMPILAÇÃO E DOWNLOAD
     async function applySanitizationAndCompile() {
         const btnCompile = document.getElementById("btn-compile");
-        btnCompile.setAttribute("disabled", "true");
-        btnCompile.querySelector("span").textContent = "Limpando e criando arquivo...";
+        if (btnCompile) {
+            btnCompile.setAttribute("disabled", "true");
+            const btnSpan = btnCompile.querySelector("span");
+            if (btnSpan) btnSpan.textContent = "Limpando e criando arquivo...";
+        }
         
-        addLog("[ Sistema ] Iniciando a remoção dos vírus selecionados...", "log-sys");
+        addLog("[ Sistema ] Removendo os vírus selecionados...", "log-sys");
         
         const cleanZip = new JSZip();
         const entries = Object.keys(loadedZipObject.files);
@@ -404,7 +443,6 @@
                 continue;
             }
 
-            // Excluir arquivos executáveis marcados
             const deleteOrders = detectedAnomalies.filter(a => a.filename === filename && a.actionType === "DELETE_FILE" && a.checked);
             if (deleteOrders.length > 0) {
                 removedFilesCount++;
@@ -412,7 +450,6 @@
                 continue;
             }
 
-            // Limpar códigos maliciosos marcados
             const modifyOrders = detectedAnomalies.filter(a => a.filename === filename && a.actionType !== "DELETE_FILE" && a.checked);
             if (modifyOrders.length > 0) {
                 let content = await fileObj.async("string");
@@ -433,13 +470,12 @@
                 modifiedFilesCount++;
                 addLog(`[ Limpo ] Vírus removido de dentro de: ${filename}`, "log-clean");
             } else {
-                // Manter arquivo normal que não tem vírus ou que o usuário desmarcou
                 const binaryData = await fileObj.async("blob");
                 cleanZip.file(filename, binaryData);
             }
         }
 
-        addLog("[ Sistema ] Empacotando o novo arquivo .ZIP seguro...", "log-sys");
+        addLog("[ Sistema ] Empacotando novo arquivo limpo...", "log-sys");
         const generatedBlob = await cleanZip.generateAsync({ type: "blob" });
         const downloadUrl = URL.createObjectURL(generatedBlob);
 
@@ -455,11 +491,17 @@
         }
         
         const statStatus = document.getElementById("stat-status");
-        statStatus.textContent = "PURIFICADO";
-        statStatus.className = "stat-number val-green";
+        if (statStatus) {
+            statStatus.textContent = "PURIFICADO";
+            statStatus.className = "stat-number val-green";
+        }
         
-        btnCompile.querySelector("span").textContent = "Limpeza Concluída!";
-        addLog(`[ Sucesso ] Tudo pronto! Excluímos ${removedFilesCount} arquivos ruins e limpamos o código de ${modifiedFilesCount} arquivos. Clique no botão verde para baixar!`, "log-clean");
+        if (btnCompile) {
+            const btnSpan = btnCompile.querySelector("span");
+            if (btnSpan) btnSpan.textContent = "Limpeza Concluída!";
+        }
+        
+        addLog(`[ Sucesso ] Tudo pronto! Apagamos ${removedFilesCount} arquivos perigosos e limpamos o código de ${modifiedFilesCount} arquivos. Clique no botão verde para baixar!`, "log-clean");
     }
 
 })();
