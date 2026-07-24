@@ -1,42 +1,35 @@
 /**
  * ============================================================================
- * ZAKE ANTI GRABBER // SCRIPT.JS (EXCLUSIVO PARA GRAABBERS ESPECIFICADOS)
+ * ZAKE ANTI GRABBER // SCRIPT.JS (EXCLUSIVO PARA CHEATS & MEMORY SOURCES)
  * ============================================================================
  */
 
 (function () {
     'use strict';
 
-    // Lista focada estritamente nas assinaturas reais informadas por vocês (sem falsos positivos em cheats)
     let memoryRST = {
-        metadata: { version: "4.3", author: "Zake", total_signatures: 3 },
-        rules: [
-            { 
-                id: "ZAKE_PREBUILD", 
-                name: "Injeção Maliciosa em PreBuildEvent (.vcxproj)", 
-                regex: "<PreBuildEvent>[\\s\\S]*?<\\/PreBuildEvent>", 
-                severity: "CRITICAL", 
-                action: "REMOVE_BLOCK", 
-                desc: "Remover bloco PreBuild infectado" 
-            },
-            { 
-                id: "ZAKE_HEX_DROPPER", 
-                name: "Dropper Hexadecimal Ofuscado (PowerShell / iwr)", 
-                regex: "(\\x[0-9a-fA-F]{2}){10,}.*(powershell|iwr|Invoke-WebRequest|Start-Process|WindowStyle)", 
-                severity: "CRITICAL", 
-                action: "REMOVE_LINE", 
-                desc: "Apagar linha com dropper ofuscado" 
-            },
-            { 
-                id: "ZAKE_EXO_API", 
-                name: "Endpoint de Exfiltração Conhecido (exo-api.tf / Retev)", 
-                regex: "exo-api\\.tf|Retev\\.php", 
-                severity: "CRITICAL", 
-                action: "REMOVE_KEYWORD_LINE", 
-                desc: "Apagar linha contendo link do malware" 
-            }
+        metadata: { version: "4.3", author: "Zake", total_signatures: 0 },
+        whitelisted_contexts: [
+            "require('discord.js')", "require(\"discord.js\")", "import discord", 
+            "from discord", "discord.Client", "discord.WebhookClient", "https://discord.gg/",
+            "ImGui::Text", "ImGui::Button", "ImGui_ImplDX12_", "ImGui_ImplDX9_", 
+            "ImGui_ImplWin32_", "CreateDeviceD3D", "CleanupDeviceD3D", "LRESULT WINAPI"
         ],
-        keywords_blacklist: [] // Vazio de propósito para não disparar falsos positivos em cheats/memory
+        rules: [
+            // ESTES SÃO OS ÚNICOS QUE PODEM VIR MARCADOS (100% O GRABBER ESPECÍFICO DO CASO)
+            { id: "RST_001", name: "Injeção PreBuild maliciosa (Dropper no .vcxproj)", regex: "<PreBuildEvent>[\\s\\S]*?(powershell|iwr|Invoke-WebRequest|DownloadString|exo-api)[\\s\\S]*?<\\/PreBuildEvent>", severity: "CRITICAL", action: "REMOVE_BLOCK", desc: "Remover bloco infectado com dropper", autoCheck: true },
+            { id: "RST_002", name: "Injeção PostBuild maliciosa", regex: "<PostBuildEvent>[\\s\\S]*?(powershell|iwr|Invoke-WebRequest|DownloadString|exo-api)[\\s\\S]*?<\\/PostBuildEvent>", severity: "CRITICAL", action: "REMOVE_BLOCK", desc: "Remover bloco infectado", autoCheck: true },
+            { id: "RST_003", name: "String maliciosa específica do ImGui (Fwfkuuv... / Retev.php)", regex: "(Fwfkuuv[a-zA-Z0-9]+|exo-api\\.tf|Retev\\.php)", severity: "CRITICAL", action: "REMOVE_LINE", desc: "Apagar linha com o token do grabber", autoCheck: true },
+            
+            // TODO O RESTO ABAIXO SERVE APENAS DE AVISO E VEM SEMPRE DESMARCADO PARA NÃO QUEBRAR CHEATS
+            { id: "RST_004", name: "Tag PreBuild genérica (Revisar se é do projeto)", regex: "<PreBuildEvent>[\\s\\S]*?<\\/PreBuildEvent>", severity: "MEDIUM", action: "REMOVE_BLOCK", desc: "Remover bloco PreBuild", autoCheck: false },
+            { id: "RST_005", name: "Comando genérico do PowerShell", regex: "^.*(powershell|iwr|Invoke-WebRequest).*$", severity: "MEDIUM", action: "REMOVE_LINE", desc: "Apagar linha de script", autoCheck: false },
+            { id: "RST_006", name: "Webhook do Discord externo", regex: "https?:\\/\\/(ptb\\.|canary\\.)?discord(app)?\\.com\\/api\\/webhooks\\/[0-9]+\\/[a-zA-Z0-9_-]+", severity: "HIGH", action: "REPLACE_NULL", desc: "Destruir link do Webhook", autoCheck: false }
+        ],
+        keywords_blacklist: [
+            "Fwfkuuv157wg2gjthwla0lwbo1493h7", "exo-api.tf", "Retev.php", "BK291834.exe", "Berok.exe",
+            "AoMiRfxV.vbs", "g2Yiw4NcWwed", "GetChunk", "AppendChunk", "Scripting.FileSystemObject"
+        ]
     };
 
     let loadedZipObject = null;
@@ -46,7 +39,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         setupEventListeners();
-        addLog("[ Sistema ] Pronto. Foco exclusivo nas assinaturas reais de grabber.", "log-sys");
+        addLog("[ Sistema ] Pronto. Modo de segurança para sources de cheat ativado (tudo vem desmarcado por padrão).", "log-sys");
         loadMemoryRSTData();
     });
 
@@ -56,16 +49,21 @@
             if (!response.ok) throw new Error("HTTP Error");
             const data = await response.json();
             
-            // Se houver regras no json externo, unimos, mas mantemos o critério rígido
-            if (data && data.rules) {
-                memoryRST.rules = data.rules;
+            if (data && data.rules && data.keywords_blacklist) {
+                // Mantém apenas regras seguras e garante que heurísticas genéricas venham com autoCheck: false
+                data.rules.forEach(r => {
+                    if (!r.autoCheck) r.autoCheck = false;
+                });
+                memoryRST = data;
+                const total = (memoryRST.rules.length || 0) + (memoryRST.keywords_blacklist.length || 0);
                 const dbCount = document.getElementById("db-count");
-                if (dbCount) dbCount.textContent = `${memoryRST.rules.length} regras precisas`;
-                addLog("[ Sistema ] Regras de detecção carregadas do servidor.", "log-sys");
+                if (dbCount) dbCount.textContent = `${total} assinaturas`;
+                addLog(`[ Sistema ] Base de dados carregada (${total} regras).`, "log-sys");
             }
         } catch (error) {
+            const total = (memoryRST.rules?.length || 0);
             const dbCount = document.getElementById("db-count");
-            if (dbCount) dbCount.textContent = `${memoryRST.rules.length} regras (padrão)`;
+            if (dbCount) dbCount.textContent = `${total} regras (padrão)`;
         }
     }
 
@@ -100,10 +98,11 @@
                         try {
                             const customJSON = JSON.parse(event.target.result);
                             if (customJSON.rules) {
-                                memoryRST.rules = customJSON.rules;
-                                addLog("[ Sistema ] Novas regras aplicadas com sucesso!", "log-sys");
+                                customJSON.rules.forEach(r => { if (r.autoCheck === undefined) r.autoCheck = false; });
+                                memoryRST = customJSON;
+                                addLog("[ Sistema ] Nova lista de regras aplicada!", "log-sys");
                             }
-                        } catch (err) { addLog("[ Erro ] Arquivo .json inválido.", "log-danger"); }
+                        } catch (err) { addLog("[ Erro ] JSON inválido.", "log-danger"); }
                     };
                     reader.readAsText(file);
                 }
@@ -133,10 +132,7 @@
 
     function clearTerminal() {
         const terminal = document.getElementById("terminal");
-        if (terminal) {
-            terminal.innerHTML = "";
-            addLog("[ Sistema ] Avisos limpos.", "log-sys");
-        }
+        if (terminal) { terminal.innerHTML = ""; addLog("[ Sistema ] Avisos limpos.", "log-sys"); }
     }
 
     function filterLogs(filterClass, btnElement) {
@@ -165,10 +161,7 @@
         if (statStatus) { statStatus.textContent = "VERIFICANDO..."; statStatus.className = "stat-number val-yellow"; }
         
         const vtDashboard = document.getElementById("vt-dashboard");
-        if (vtDashboard) {
-            vtDashboard.classList.add("hidden-section");
-            vtDashboard.classList.remove("highlight-alert");
-        }
+        if (vtDashboard) { vtDashboard.classList.add("hidden-section"); vtDashboard.classList.remove("highlight-alert"); }
         
         const vtTbody = document.getElementById("vt-tbody");
         if (vtTbody) vtTbody.innerHTML = "";
@@ -196,12 +189,9 @@
                 };
             }
         }
-        return { line: "?", text: "Trecho localizado no arquivo." };
+        return { line: "?", text: "Trecho encontrado em bloco ou arquivo." };
     }
 
-    // ============================================================================
-    // VARREDURA RESTRITA (TUDO VEM DESMARCADO POR PADRÃO)
-    // ============================================================================
     async function startScan(file) {
         resetSystem();
         originalFileName = file.name;
@@ -211,15 +201,17 @@
 
         addLog(`[ Sistema ] Analisando o arquivo: ${originalFileName}`, "log-sys");
         if (isRar) addLog("[ Aviso ] Arquivo .RAR detectado. Será convertido para .ZIP limpo.", "log-warn");
+        if (password) addLog("[ Sistema ] Usando senha informada...", "log-sys");
 
         try {
             const zip = new JSZip();
             loadedZipObject = await zip.loadAsync(file, { password: password || undefined });
             
             const entries = Object.keys(loadedZipObject.files);
-            addLog(`[ Sistema ] Verificando ${entries.length} arquivos na source...`, "log-info");
+            addLog(`[ Sistema ] Verificando ${entries.length} itens (injeções de memória e DLLs ignoradas por segurança)...`, "log-info");
             
-            const textExtensions = [".vcxproj", ".sln", ".cpp", ".h", ".hpp", ".c", ".cs", ".txt", ".json", ".xml", ".php"];
+            const bannedExtensions = [".exe", ".scr", ".vbs", ".bat", ".cmd", ".ps1", ".pif"];
+            const textExtensions = [".vcxproj", ".sln", ".cpp", ".h", ".hpp", ".c", ".cs", ".js", ".ts", ".py", ".txt", ".json", ".xml", ".html", ".css", ".md", ".ini", ".php"];
 
             for (let i = 0; i < entries.length; i++) {
                 const filename = entries[i];
@@ -228,16 +220,38 @@
 
                 countTotal++;
                 document.getElementById("stat-total").textContent = countTotal;
-                const ext = filename.toLowerCase().substring(filename.lastIndexOf("."));
+                const lowerName = filename.toLowerCase();
+                const ext = lowerName.substring(lowerName.lastIndexOf("."));
+
+                // Executáveis soltos perigosos (.exe fora do padrão de cheat) -> Crítico, mas se for .exe comum de loader/cheat, deixamos desmarcado por segurança, exceto se for explicitamente o grabber
+                if (bannedExtensions.includes(ext)) {
+                    detectedAnomalies.push({
+                        id: `ANOM_${detectedAnomalies.length}`,
+                        filename: filename,
+                        ruleName: "Executável suspeito encontrado",
+                        severity: "HIGH",
+                        actionType: "DELETE_FILE",
+                        actionDesc: "Excluir arquivo",
+                        snippet: { line: "Binário", text: "Arquivo executável solto" },
+                        checked: false // DESMARCADO POR PADRÃO PARA NÃO QUEBRAR LOADERS
+                    });
+                    addLog(`[ Aviso ] Arquivo executável encontrado (veja se não é seu loader): ${filename}`, "log-warn");
+                    continue;
+                }
 
                 if (textExtensions.includes(ext)) {
                     let content = "";
                     try { content = await fileObj.async("string"); } catch (encErr) { continue; }
 
+                    // Regras
                     for (const rule of memoryRST.rules) {
                         const regex = new RegExp(rule.regex, "gim");
                         if (regex.test(content)) {
                             const snippetInfo = extractCodeSnippet(content, rule.regex);
+                            
+                            // SÓ MARCA SE FOR O GRABBER EXATO DO PRIMEIRO PROMPT (autoCheck: true)
+                            // Todo o resto vem estritamente false para não quebrar memory/cheats
+                            const shouldCheck = rule.autoCheck === true;
 
                             detectedAnomalies.push({
                                 id: `ANOM_${detectedAnomalies.length}`,
@@ -246,23 +260,47 @@
                                 severity: rule.severity,
                                 actionType: rule.action,
                                 regex: rule.regex,
-                                actionDesc: rule.desc,
+                                actionDesc: rule.desc || "Apagar código",
                                 snippet: snippetInfo,
-                                checked: false // <-- TUDO DESMARCADO POR PADRÃO CONFORME SUA SOLICITAÇÃO
+                                checked: shouldCheck 
                             });
-                            addLog(`[ ENCONTRADO ] ${rule.name} em: ${filename}`, "log-warn");
+                            
+                            if (shouldCheck) {
+                                addLog(`[ GRABBER CONFIRMADO ] ${rule.name} em: ${filename}`, "log-danger");
+                            } else {
+                                addLog(`[ Aviso genérico ] ${rule.name} em: ${filename} (Desmarcado por segurança)`, "log-warn");
+                            }
+                        }
+                    }
+
+                    // Keywords da blacklist (Sempre desmarcadas por padrão para proteger funções de memória/cheats)
+                    for (const kw of (memoryRST.keywords_blacklist || [])) {
+                        if (content.includes(kw)) {
+                            const snippetInfo = extractCodeSnippet(content, kw);
+                            detectedAnomalies.push({
+                                id: `ANOM_${detectedAnomalies.length}`,
+                                filename: filename,
+                                ruleName: `Termo suspeito ('${kw}')`,
+                                severity: "HIGH",
+                                actionType: "REMOVE_KEYWORD_LINE",
+                                keyword: kw,
+                                actionDesc: "Apagar linha",
+                                snippet: snippetInfo,
+                                checked: false // SEMPRE DESMARCADO POR PADRÃO
+                            });
                         }
                     }
                 }
             }
 
             document.getElementById("stat-threats").textContent = detectedAnomalies.length;
-            document.getElementById("stat-pending").textContent = "0"; // Como vem tudo desmarcado
+            const initialCheckedCount = detectedAnomalies.filter(a => a.checked).length;
+            document.getElementById("stat-pending").textContent = initialCheckedCount;
             
             const statStatus = document.getElementById("stat-status");
             if (detectedAnomalies.length > 0) {
-                if (statStatus) { statStatus.textContent = "ENCONTRADO"; statStatus.className = "stat-number val-yellow"; }
-                addLog(`[ Concluído ] Encontramos ${detectedAnomalies.length} itens. Revise na tabela e marque o que deseja remover.`, "log-warn");
+                if (statStatus) { statStatus.textContent = "ITENS ENCONTRADOS"; statStatus.className = "stat-number val-yellow"; }
+                addLog(`[ Concluído ] ${detectedAnomalies.length} itens encontrados. O que for grabber real do seu grupo veio marcado; o resto está desmarcado para proteger seu cheat.`, "log-warn");
                 
                 renderVTDashboard();
                 const vtDashboard = document.getElementById("vt-dashboard");
@@ -275,20 +313,20 @@
                 if (btnCompile) {
                     btnCompile.removeAttribute("disabled");
                     const btnSpan = btnCompile.querySelector("span");
-                    if (btnSpan) btnSpan.textContent = "⚠️ Revise e marque os itens acima para compilar";
+                    if (btnSpan) btnSpan.textContent = "⚠️ Revise e clique para limpar";
                 }
             } else {
                 if (statStatus) { statStatus.textContent = "LIMPO"; statStatus.className = "stat-number val-green"; }
-                addLog("[ Seguro ] Nenhuma assinatura de grabber do grupo foi encontrada!", "log-clean");
+                addLog("[ Seguro ] Nenhum grabber do grupo foi encontrado!", "log-clean");
                 const btnCompile = document.getElementById("btn-compile");
                 if (btnCompile) {
                     const btnSpan = btnCompile.querySelector("span");
-                    if (btnSpan) btnSpan.textContent = "Nenhum item marcado";
+                    if (btnSpan) btnSpan.textContent = "O arquivo está seguro!";
                 }
             }
 
         } catch (error) {
-            addLog(`[ Erro ] Não foi possível ler o arquivo: ${error.message}`, "log-danger");
+            addLog(`[ Erro ] Falha ao ler o arquivo: ${error.message}`, "log-danger");
             const statStatus = document.getElementById("stat-status");
             if (statStatus) { statStatus.textContent = "ERRO"; statStatus.className = "stat-number val-red"; }
         }
@@ -305,8 +343,11 @@
 
         detectedAnomalies.forEach((item, index) => {
             const tr = document.createElement("tr");
+            let sevText = item.checked ? "Confirmado (Marcado)" : "Opcional (Desmarcado)";
+            let sevClass = item.checked ? "sev-CRITICAL" : "sev-MEDIUM";
+
             const snippetLine = item.snippet?.line ? `Linha ${item.snippet.line}:` : "Trecho:";
-            const snippetText = item.snippet?.text || "Trecho localizado";
+            const snippetText = item.snippet?.text || "Trecho";
 
             tr.innerHTML = `
                 <td style="text-align: center; vertical-align: middle;">
@@ -315,7 +356,7 @@
                 <td style="font-weight: 600; color: #fff; vertical-align: middle;">${item.filename}</td>
                 <td style="vertical-align: middle;">
                     <span style="display: block; margin-bottom: 3px;">${item.ruleName}</span>
-                    <span class="tag-severity sev-MEDIUM">Requer Revisão</span>
+                    <span class="tag-severity ${sevClass}">${sevText}</span>
                 </td>
                 <td style="vertical-align: middle;">
                     <div class="code-snippet-box">
@@ -333,7 +374,7 @@
         detectedAnomalies[index].checked = isChecked;
         const countChecked = detectedAnomalies.filter(a => a.checked).length;
         document.getElementById("stat-pending").textContent = countChecked;
-        addLog(`[ Ajuste ] O item '${detectedAnomalies[index].filename}' ${isChecked ? "será removido" : "será mantido"}.`, "log-info");
+        addLog(`[ Ajuste ] O item '${detectedAnomalies[index].filename}' ${isChecked ? "será alterado/removido" : "será ignorado (mantido no código)"}.`, "log-info");
     };
 
     async function applySanitizationAndCompile() {
@@ -344,40 +385,49 @@
             if (btnSpan) btnSpan.textContent = "Gerando arquivo limpo...";
         }
         
-        addLog("[ Sistema ] Aplicando remoções selecionadas...", "log-sys");
+        addLog("[ Sistema ] Aplicando limpezas selecionadas...", "log-sys");
         const cleanZip = new JSZip();
         const entries = Object.keys(loadedZipObject.files);
+        let removedFilesCount = 0;
         let modifiedFilesCount = 0;
 
         for (const filename of entries) {
             const fileObj = loadedZipObject.files[filename];
             if (fileObj.dir) { cleanZip.folder(filename); continue; }
 
-            // Pega apenas as ordens que o usuário REALMENTE MARCOU na caixa de seleção
-            const activeOrders = detectedAnomalies.filter(a => a.filename === filename && a.checked);
-            
-            if (activeOrders.length > 0) {
+            const deleteOrders = detectedAnomalies.filter(a => a.filename === filename && a.actionType === "DELETE_FILE" && a.checked);
+            if (deleteOrders.length > 0) {
+                removedFilesCount++;
+                addLog(`[ Apagado ] Arquivo excluído: ${filename}`, "log-danger");
+                continue;
+            }
+
+            const modifyOrders = detectedAnomalies.filter(a => a.filename === filename && a.actionType !== "DELETE_FILE" && a.checked);
+            if (modifyOrders.length > 0) {
                 let content = await fileObj.async("string");
-                activeOrders.forEach(order => {
+                modifyOrders.forEach(order => {
                     if (order.actionType === "REMOVE_BLOCK" || order.actionType === "REMOVE_LINE") {
                         const reg = new RegExp(order.regex, "gim");
                         content = content.replace(reg, "");
+                    } else if (order.actionType === "REPLACE_NULL") {
+                        const reg = new RegExp(order.regex, "gim");
+                        content = content.replace(reg, "https://discord.com/api/webhooks/REMOVIDO");
                     } else if (order.actionType === "REMOVE_KEYWORD_LINE") {
                         const lines = content.split("\n");
-                        const cleanLines = lines.filter(l => !l.includes("exo-api.tf") && !l.includes("Retev.php"));
+                        const cleanLines = lines.filter(l => !l.includes(order.keyword));
                         content = cleanLines.join("\n");
                     }
                 });
                 cleanZip.file(filename, content);
                 modifiedFilesCount++;
-                addLog(`[ Limpo ] Itens removidos de: ${filename}`, "log-clean");
+                addLog(`[ Limpo ] Modificado com sucesso: ${filename}`, "log-clean");
             } else {
                 const binaryData = await fileObj.async("blob");
                 cleanZip.file(filename, binaryData);
             }
         }
 
-        addLog("[ Sistema ] Empacotando novo arquivo .ZIP...", "log-sys");
+        addLog("[ Sistema ] Criando pacote final...", "log-sys");
         const generatedBlob = await cleanZip.generateAsync({ type: "blob" });
         const downloadUrl = URL.createObjectURL(generatedBlob);
 
@@ -394,9 +444,9 @@
         
         const statStatus = document.getElementById("stat-status");
         if (statStatus) { statStatus.textContent = "PRONTO"; statStatus.className = "stat-number val-green"; }
-        if (btnCompile) { const btnSpan = btnCompile.querySelector("span"); if (btnSpan) btnSpan.textContent = "Concluído!"; }
+        if (btnCompile) { const btnSpan = btnCompile.querySelector("span"); if (btnSpan) btnSpan.textContent = "Pronto para baixar!"; }
         
-        addLog(`[ Sucesso ] Arquivo limpo gerado com sucesso! ${modifiedFilesCount} arquivos modificados com base nas suas marcações.`, "log-clean");
+        addLog(`[ Sucesso ] Arquivo limpo gerado com sucesso!`, "log-clean");
     }
 
 })();
